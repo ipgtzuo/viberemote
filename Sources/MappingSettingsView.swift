@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Foundation
 
 private enum MappingMode: String, CaseIterable, Identifiable {
     case manual
@@ -48,6 +49,17 @@ private let mappingEntries: [MappingEntry] = [
     .init(button: .siri, side: .right, y: 230, source: CGPoint(x: 524, y: 181)),
     .init(button: .ringRight, side: .right, y: 340, source: CGPoint(x: 497, y: 97)),
     .init(button: .ringDown, side: .right, y: 450, source: CGPoint(x: 450, y: 205))
+]
+
+private let xiaomiMappingEntries: [MappingEntry] = [
+    .init(button: .siri, side: .left, y: 80, source: CGPoint(x: 450, y: 40)),
+    .init(button: .ringUp, side: .left, y: 155, source: CGPoint(x: 450, y: 72)),
+    .init(button: .ringLeft, side: .left, y: 240, source: CGPoint(x: 405, y: 125)),
+    .init(button: .select, side: .left, y: 325, source: CGPoint(x: 450, y: 125)),
+    .init(button: .back, side: .left, y: 410, source: CGPoint(x: 420, y: 250)),
+    .init(button: .tv, side: .right, y: 140, source: CGPoint(x: 450, y: 250)),
+    .init(button: .ringRight, side: .right, y: 250, source: CGPoint(x: 495, y: 125)),
+    .init(button: .ringDown, side: .right, y: 370, source: CGPoint(x: 450, y: 178))
 ]
 
 private func actionColor(_ action: ButtonAction, isDark: Bool) -> Color {
@@ -330,6 +342,139 @@ struct RemoteDiagram: View {
     }
 }
 
+private struct XiaomiRingKey: Identifiable {
+    let button: RemoteButton
+    let point: CGPoint
+    let symbol: String
+    var id: String { button.rawValue }
+}
+
+struct XiaomiRemoteDiagram: View {
+    var selected: RemoteButton
+    var onSelect: (RemoteButton) -> Void
+
+    private let bodyShape = RoundedRectangle(cornerRadius: 34, style: .continuous)
+    private let accent = Color(red: 1.0, green: 0.66, blue: 0.28)
+
+    private let ring: [XiaomiRingKey] = [
+        XiaomiRingKey(button: .ringUp, point: CGPoint(x: 60, y: 22), symbol: "▲"),
+        XiaomiRingKey(button: .ringLeft, point: CGPoint(x: 22, y: 60), symbol: "◀"),
+        XiaomiRingKey(button: .ringRight, point: CGPoint(x: 98, y: 60), symbol: "▶"),
+        XiaomiRingKey(button: .ringDown, point: CGPoint(x: 60, y: 98), symbol: "▼")
+    ]
+
+    var body: some View {
+        ZStack {
+            bodyShape
+                .fill(
+                    LinearGradient(
+                        stops: [
+                            .init(color: Color(red: 0.16, green: 0.17, blue: 0.19), location: 0),
+                            .init(color: Color(red: 0.075, green: 0.08, blue: 0.09), location: 0.5),
+                            .init(color: Color(red: 0.045, green: 0.05, blue: 0.058), location: 1)
+                        ],
+                        startPoint: UnitPoint(x: 0.28, y: 0),
+                        endPoint: UnitPoint(x: 0.72, y: 1)
+                    )
+                )
+                .overlay(bodyShape.strokeBorder(.white.opacity(0.10), lineWidth: 1))
+                .overlay(bodyShape.strokeBorder(.black.opacity(0.7), lineWidth: 1).padding(1))
+                .shadow(color: .black.opacity(0.5), radius: 20, y: 14)
+                .frame(width: 150, height: 470)
+                .position(x: 75, y: 255)
+
+            // Top microphone and power markings.
+            RemoteFaceKey(systemName: "mic", iconSize: 12, selected: selected == .siri, action: { onSelect(.siri) })
+                .position(x: 40, y: 48)
+            Image(systemName: "power")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.34))
+                .position(x: 110, y: 48)
+
+            // Circular direction pad with OK in the center.
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color(red: 0.12, green: 0.125, blue: 0.14), Color(red: 0.045, green: 0.048, blue: 0.055)],
+                            center: UnitPoint(x: 0.5, y: 0.38),
+                            startRadius: 0,
+                            endRadius: 70
+                        )
+                    )
+                    .overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1))
+                    .overlay(Circle().strokeBorder(.black.opacity(0.75), lineWidth: 1).padding(1))
+
+                Circle()
+                    .strokeBorder(.white.opacity(0.06), lineWidth: 1)
+                    .padding(15)
+
+                ForEach(ring) { item in
+                    Text(item.symbol)
+                        .font(.system(size: 9))
+                        .foregroundStyle(.white.opacity(0.48))
+                        .frame(width: 24, height: 24)
+                        .overlay(
+                            Circle().strokeBorder(selected == item.button ? accent : .clear, lineWidth: 1.5)
+                        )
+                        .position(item.point)
+                        .onTapGesture { onSelect(item.button) }
+                }
+
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color(red: 0.16, green: 0.17, blue: 0.19), Color(red: 0.06, green: 0.065, blue: 0.075)],
+                            center: UnitPoint(x: 0.5, y: 0.42),
+                            startRadius: 0,
+                            endRadius: 30
+                        )
+                    )
+                    .overlay(Circle().strokeBorder(.white.opacity(0.10), lineWidth: 1))
+                    .overlay(Circle().strokeBorder(selected == .select ? accent : .clear, lineWidth: 2))
+                    .frame(width: 50, height: 50)
+                    .onTapGesture { onSelect(.select) }
+            }
+            .frame(width: 120, height: 120)
+            .position(x: 75, y: 125)
+            .shadow(color: .black.opacity(0.35), radius: 4, y: 3)
+
+            // Back / home / menu row.
+            RemoteFaceKey(systemName: "chevron.backward", iconSize: 13, selected: selected == .back, action: { onSelect(.back) })
+                .position(x: 40, y: 250)
+            RemoteFaceKey(systemName: "house", iconSize: 13, selected: selected == .tv, action: { onSelect(.tv) })
+                .position(x: 75, y: 250)
+            RemoteFaceKey(systemName: "line.3.horizontal", iconSize: 13, selected: false, action: {})
+                .position(x: 110, y: 250)
+
+            // Volume rocker is decorative for now.
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(Color.white.opacity(0.10))
+                .frame(width: 5, height: 64)
+                .overlay(
+                    VStack(spacing: 10) {
+                        Text("+").font(.system(size: 9, weight: .semibold))
+                        Text("−").font(.system(size: 9, weight: .semibold))
+                    }
+                    .foregroundStyle(.white.opacity(0.35))
+                )
+                .position(x: 145, y: 160)
+
+            VStack(spacing: 2) {
+                Text("RC003")
+                    .font(.system(size: 5.5, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.32))
+                Text("MI REMOTE")
+                    .font(.system(size: 4.5, weight: .medium, design: .monospaced))
+                    .tracking(0.6)
+                    .foregroundStyle(.white.opacity(0.20))
+            }
+            .position(x: 75, y: 455)
+        }
+        .frame(width: 150, height: 512)
+    }
+}
+
 struct MappingSettingsView: View {
     @ObservedObject var model: VibeRemoteModel
     @ObservedObject var bindings: ButtonBindingStore
@@ -339,6 +484,21 @@ struct MappingSettingsView: View {
 
     private var resolvedScheme: ColorScheme { model.appearanceMode.colorScheme ?? systemScheme }
     private var theme: VibeTheme { VibeTheme(resolvedScheme) }
+
+    private var isXiaomi: Bool {
+        model.remoteName.localizedCaseInsensitiveContains("xiaomi")
+            || model.remoteName.localizedCaseInsensitiveContains("rc003")
+            || model.remoteName.localizedCaseInsensitiveContains("mi rc")
+            || ProcessInfo.processInfo.arguments.contains("--xiaomi-preview")
+    }
+
+    private var activeEntries: [MappingEntry] {
+        isXiaomi ? xiaomiMappingEntries : mappingEntries
+    }
+
+    private var remoteLayoutName: String {
+        isXiaomi ? "Xiaomi RC003" : "A2854"
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -354,6 +514,11 @@ struct MappingSettingsView: View {
         .onReceive(model.physicalButtonEvents) { button in
             selected = button
         }
+        .onChange(of: isXiaomi) { xiaomi in
+            if xiaomi, !xiaomiMappingEntries.contains(where: { $0.button == selected }) {
+                selected = .siri
+            }
+        }
     }
 
     private var header: some View {
@@ -361,7 +526,7 @@ struct MappingSettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("遥控器映射")
                     .font(.system(size: 20, weight: .semibold))
-                Text("正在编辑：\(model.modeDisplay) · 中间是 A2854 实体布局，左右引导线分别指向对应的电脑动作。")
+                Text("正在编辑：\(model.modeDisplay) · 中间是 \(remoteLayoutName) 实体布局，左右引导线分别指向对应的电脑动作。")
                     .font(.system(size: 10))
                     .foregroundStyle(theme.text(0.42))
             }
@@ -420,9 +585,10 @@ struct MappingSettingsView: View {
     }
 
     private var diagram: some View {
-        ZStack(alignment: .topLeading) {
+        let entries = activeEntries
+        return ZStack(alignment: .topLeading) {
             Canvas { context, size in
-                for entry in mappingEntries {
+                for entry in entries {
                     let action = bindings.action(for: entry.button)
                     let color = actionColor(action, isDark: theme.isDark)
                     let endX: CGFloat = entry.side == .left ? 330 : 570
@@ -449,12 +615,19 @@ struct MappingSettingsView: View {
             .frame(width: 900, height: 512)
             .allowsHitTesting(false)
 
-            RemoteDiagram(selected: selected) { button in
-                selected = button
+            if isXiaomi {
+                XiaomiRemoteDiagram(selected: selected) { button in
+                    selected = button
+                }
+                .position(x: 450, y: 256)
+            } else {
+                RemoteDiagram(selected: selected) { button in
+                    selected = button
+                }
+                .position(x: 450, y: 256)
             }
-            .position(x: 450, y: 256)
 
-            ForEach(mappingEntries) { entry in
+            ForEach(entries) { entry in
                 mappingCard(entry)
                     .frame(width: 280, height: 42)
                     .position(x: entry.side == .left ? 180 : 720, y: entry.y)

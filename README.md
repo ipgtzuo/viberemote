@@ -45,6 +45,12 @@
 
 ![实体遥控器映射](preview-mapping.png)
 
+### Xiaomi RC003
+
+连接 Xiaomi 2 Pro 后，映射窗口会自动切换成 RC003 的实体按键布局。
+
+![Xiaomi RC003 映射](preview-mapping-xiaomi.png)
+
 ### 淡色 / 深色
 
 <table>

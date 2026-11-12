@@ -628,30 +628,47 @@ struct MappingSettingsView: View {
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 3) {
-                Text("快速预设")
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("映射方案")
                     .font(.system(size: 8, weight: .medium))
                     .foregroundStyle(theme.text(0.35))
-                HStack(spacing: 6) {
-                    Button("鼠标模式") { bindings.apply(.mouse) }
+
+                HStack(spacing: 2) {
+                    ForEach(ButtonPreset.allCases) { preset in
+                        Button {
+                            bindings.apply(preset)
+                        } label: {
+                            Text(preset.title)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundStyle(bindings.activePreset == preset ? theme.selectedText : theme.text(0.52))
+                                .frame(width: 76, height: 24)
+                                .background(
+                                    Capsule().fill(bindings.activePreset == preset ? theme.selectedFill : Color.clear)
+                                )
+                        }
                         .buttonStyle(.plain)
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(theme.text(0.68))
-                        .padding(.horizontal, 9)
-                        .frame(height: 24)
-                        .background(Capsule().fill(theme.text(0.06)).overlay(Capsule().strokeBorder(theme.text(0.08), lineWidth: 1)))
-                    Button("DSH 键盘") { bindings.apply(.dshKeyboard) }
-                        .buttonStyle(.plain)
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(theme.text(0.68))
-                        .padding(.horizontal, 9)
-                        .frame(height: 24)
-                        .background(Capsule().fill(theme.text(0.06)).overlay(Capsule().strokeBorder(theme.text(0.08), lineWidth: 1)))
+                        .help(preset.detail)
+                    }
+                }
+                .padding(2)
+                .background(
+                    Capsule()
+                        .fill(theme.text(0.055))
+                        .overlay(Capsule().strokeBorder(theme.text(0.07), lineWidth: 1))
+                )
+
+                HStack(spacing: 8) {
+                    Text(bindings.activePreset?.detail ?? "自定义：已单独调整按键")
+                        .font(.system(size: 7.5))
+                        .foregroundStyle(theme.text(0.38))
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
                     Button("恢复默认") { bindings.reset() }
                         .buttonStyle(.plain)
-                        .font(.system(size: 8.5))
-                        .foregroundStyle(theme.text(0.40))
+                        .font(.system(size: 8))
+                        .foregroundStyle(theme.text(0.38))
                 }
+                .frame(width: 280, alignment: .trailing)
             }
         }
         .padding(.horizontal, 22)

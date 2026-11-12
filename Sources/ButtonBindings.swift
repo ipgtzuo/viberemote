@@ -70,14 +70,23 @@ enum ButtonAction: String, CaseIterable, Identifiable {
     }
 }
 
-enum ButtonPreset {
+enum ButtonPreset: String, CaseIterable, Identifiable {
     case mouse
     case dshKeyboard
+
+    var id: String { rawValue }
 
     var title: String {
         switch self {
         case .mouse: return "鼠标模式"
-        case .dshKeyboard: return "DSH 键盘模式"
+        case .dshKeyboard: return "DSH 键盘"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .mouse: return "方向环移动光标 · Select 左键 · 播放切换滚动"
+        case .dshKeyboard: return "方向环方向键 · Select/TV 发送 · 返回停止"
         }
     }
 }
@@ -85,6 +94,7 @@ enum ButtonPreset {
 @MainActor
 final class ButtonBindingStore: ObservableObject {
     @Published private(set) var bindings: [RemoteButton: ButtonAction]
+    @Published private(set) var activePreset: ButtonPreset?
 
     private(set) var profile: AppMode = .dsh
     private static let legacyKey = "vibeRemote.buttonBindings"
@@ -92,7 +102,9 @@ final class ButtonBindingStore: ObservableObject {
     init(profile: AppMode = .dsh) {
         self.profile = profile
         bindings = ButtonBindingStore.defaultBindings(for: .mouse)
+        activePreset = .mouse
         load(profile: profile)
+        refreshActivePreset()
     }
 
     func action(for button: RemoteButton) -> ButtonAction {
@@ -101,11 +113,13 @@ final class ButtonBindingStore: ObservableObject {
 
     func set(_ action: ButtonAction, for button: RemoteButton) {
         bindings[button] = action
+        refreshActivePreset()
         save()
     }
 
     func apply(_ preset: ButtonPreset) {
         bindings = ButtonBindingStore.defaultBindings(for: preset)
+        activePreset = preset
         save()
     }
 
@@ -114,7 +128,9 @@ final class ButtonBindingStore: ObservableObject {
         save()
         self.profile = profile
         bindings = ButtonBindingStore.defaultBindings(for: .mouse)
+        activePreset = .mouse
         load(profile: profile)
+        refreshActivePreset()
     }
 
     func reset() {
@@ -149,6 +165,16 @@ final class ButtonBindingStore: ObservableObject {
             raw[button.rawValue] = action.rawValue
         }
         UserDefaults.standard.set(raw, forKey: storageKey(for: profile))
+    }
+
+    private func refreshActivePreset() {
+        if bindings == ButtonBindingStore.defaultBindings(for: .mouse) {
+            activePreset = .mouse
+        } else if bindings == ButtonBindingStore.defaultBindings(for: .dshKeyboard) {
+            activePreset = .dshKeyboard
+        } else {
+            activePreset = nil
+        }
     }
 
     private func storageKey(for profile: AppMode) -> String {

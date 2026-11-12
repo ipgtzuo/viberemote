@@ -7,7 +7,7 @@
 
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111111?logo=apple)](https://www.apple.com/macos/)
 [![Swift 5](https://img.shields.io/badge/Swift-5-F05138?logo=swift)](https://swift.org)
-[![Version](https://img.shields.io/badge/version-1.6-ffb347)](../../releases/latest)
+[![Version](https://img.shields.io/badge/version-1.6-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ![VibeRemote 面板](preview.png)
@@ -87,7 +87,7 @@ flowchart LR
 
 ### 下载 DMG
 
-从 [Releases](../../releases/latest) 下载最新的 `VibeRemote-1.6.dmg`，打开后把 **VibeRemote** 拖进 `Applications`。
+从 [Releases](https://github.com/ipgtzuo/viberemote/releases/latest) 下载最新的 `VibeRemote-1.6.dmg`，打开后把 **VibeRemote** 拖进 `Applications`。
 
 应用不会出现在 Dock，启动后看菜单栏的遥控器图标。
 

@@ -37,7 +37,7 @@ private enum RemoteProfile: Equatable {
     var displayName: String {
         switch self {
         case .appleSiriRemote: return "Siri Remote (A2854)"
-        case .xiaomiRC003: return "Xiaomi Bluetooth Remote 2 Pro (RC003)"
+        case .xiaomiRC003: return "小米蓝牙遥控器 2 Pro (RC003)"
         }
     }
 }
@@ -157,8 +157,12 @@ final class RemoteManager {
             }
         }
 
-        if vendor == xiaomiVendorID, productID == xiaomiProductID {
-            return .xiaomiRC003
+        if vendor == xiaomiVendorID {
+            if productID == xiaomiProductID { return .xiaomiRC003 }
+            if let name = stringProperty(device, kIOHIDProductKey)?.lowercased(),
+               name.contains("mi rc") || name.contains("xiaomi") || name.contains("remote") || name.contains("小米") || name.contains("遥控") {
+                return .xiaomiRC003
+            }
         }
 
         return nil

@@ -1,13 +1,13 @@
 # VibeRemote
 
-**把 Apple TV 的 Siri Remote 变成 macOS 上的 Vibe Coding 遥控器。**
+**把 Siri Remote / 小米蓝牙遥控器 2 Pro 变成 macOS 上的 Vibe Coding 遥控器。**
 
 按住 Siri 说话，TV 发送，返回停止，方向环当鼠标。  
 一个常驻菜单栏的原生 macOS 小工具，让写代码这件事更像在玩。
 
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111111?logo=apple)](https://www.apple.com/macos/)
 [![Swift 5](https://img.shields.io/badge/Swift-5-F05138?logo=swift)](https://swift.org)
-[![Version](https://img.shields.io/badge/version-1.6-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.7-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ![VibeRemote 面板](preview.png)
@@ -28,7 +28,7 @@
 
 | 功能 | 说明 |
 |---|---|
-| 实体遥控器 | 支持 Siri Remote A2854，USB-C 或蓝牙 |
+| 多遥控器 | Siri Remote A2854；Xiaomi Bluetooth Remote 2 Pro (RC003) |
 | 按键映射 | 每个按键可绑定键盘、鼠标、滚动、拖拽、语音 |
 | 多模式 | DSH、WorkBuddy、豆包、通用；每个模式独立键位 |
 | 自动切换 | 跟随前台 App 自动切换对应模式 |
@@ -78,8 +78,9 @@ flowchart LR
 
 - macOS 13 或更高
 - Apple Silicon Mac
-- Apple TV Siri Remote **A2854**（USB-C）
-- 可选：蓝牙配对后使用触摸板和电量
+- Apple TV Siri Remote **A2854**（USB-C），或
+- Xiaomi Bluetooth Remote 2 Pro **RC003**（蓝牙 HID）
+- 可选：Siri Remote 蓝牙配对后使用触摸板和电量
 
 > 应用使用了 `MultitouchSupport.framework` 私有 API，因此不适合上架 Mac App Store。
 
@@ -87,7 +88,7 @@ flowchart LR
 
 ### 下载 DMG
 
-从 [Releases](https://github.com/ipgtzuo/viberemote/releases/latest) 下载最新的 `VibeRemote-1.6.dmg`，打开后把 **VibeRemote** 拖进 `Applications`。
+从 [Releases](https://github.com/ipgtzuo/viberemote/releases/latest) 下载最新的 `VibeRemote-1.7.dmg`，打开后把 **VibeRemote** 拖进 `Applications`。
 
 应用不会出现在 Dock，启动后看菜单栏的遥控器图标。
 
@@ -110,7 +111,9 @@ open dist/VibeRemote.app
 
 ### 1. 连接遥控器
 
-**USB-C**：插上即可识别，按键可用；触摸板和电量需要蓝牙。
+**Siri Remote USB-C**：插上即可识别，按键可用；触摸板和电量需要蓝牙。
+
+**Xiaomi 2 Pro**：蓝牙连接后识别为 `MI RC` / `Xiaomi Bluetooth Remote 2 Pro`。语音键、OK、返回、方向键、TV / 主页可用；音量和电源键暂未映射。
 
 **蓝牙**：
 
@@ -194,6 +197,7 @@ package.sh
 - 遥控器麦克风不被 macOS 暴露，语音使用 Mac 麦克风 + Fn
 - USB-C 下触摸板和电量不可用，需要蓝牙
 - 需要输入监控和辅助功能权限
+- Xiaomi RC003 为实验性支持，仅验证了 HID 协议和主按键映射；音量、电源键未接入
 - 未在 Intel Mac 上验证
 - 私有触摸板 API 可能随 macOS 版本变化
 

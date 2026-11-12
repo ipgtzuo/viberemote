@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-DMG="$ROOT/dist/VibeRemote-1.6.dmg"
+DMG="$ROOT/dist/VibeRemote-1.7.dmg"
 STAGE="$ROOT/.build/dmg"
 rm -rf "$STAGE"
 mkdir -p "$STAGE"

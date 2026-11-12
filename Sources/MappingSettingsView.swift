@@ -569,7 +569,7 @@ struct MappingSettingsView: View {
                 .font(.system(size: 8))
                 .foregroundStyle(theme.text(0.28))
             Spacer()
-            Text("VibeRemote 1.6 · 映射立即生效")
+            Text("VibeRemote 1.7 · 映射立即生效")
                 .font(.system(size: 7.5))
                 .foregroundStyle(theme.text(0.24))
         }

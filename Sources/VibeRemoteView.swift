@@ -455,7 +455,7 @@ struct VibeRemoteView: View {
                     .font(.system(size: 7, design: .monospaced))
                     .foregroundStyle(theme.text(0.2))
             }
-            Text("VibeRemote 1.6")
+            Text("VibeRemote 1.7")
                 .font(.system(size: 7))
                 .foregroundStyle(theme.text(0.2))
         }

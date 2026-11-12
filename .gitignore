@@ -1,0 +1,8 @@
+.DS_Store
+.build/
+dist/
+*.dmg
+*.xcuserstate
+promo/*.mp4
+promo/*.wav
+preview-title-fixed.png

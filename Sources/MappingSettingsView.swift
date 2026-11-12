@@ -486,9 +486,7 @@ struct MappingSettingsView: View {
     private var theme: VibeTheme { VibeTheme(resolvedScheme) }
 
     private var isXiaomi: Bool {
-        model.remoteName.localizedCaseInsensitiveContains("xiaomi")
-            || model.remoteName.localizedCaseInsensitiveContains("rc003")
-            || model.remoteName.localizedCaseInsensitiveContains("mi rc")
+        model.resolvedRemoteKind == .xiaomi
             || ProcessInfo.processInfo.arguments.contains("--xiaomi-preview")
     }
 
@@ -497,17 +495,18 @@ struct MappingSettingsView: View {
     }
 
     private var remoteLayoutName: String {
-        isXiaomi ? "Xiaomi RC003" : "A2854"
+        isXiaomi ? "Xiaomi RC003" : "Siri Remote A2854"
     }
 
     var body: some View {
         VStack(spacing: 0) {
             header
+            toolbar
             diagram
             inspector
             footer
         }
-        .frame(width: 900, height: 660)
+        .frame(width: 900, height: 720)
         .background(MappingPanelBackground())
         .environment(\.colorScheme, resolvedScheme)
         .preferredColorScheme(model.preferredColorScheme)
@@ -522,65 +521,140 @@ struct MappingSettingsView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(alignment: .top, spacing: 14) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text("遥控器映射")
                     .font(.system(size: 20, weight: .semibold))
-                Text("正在编辑：\(model.modeDisplay) · 中间是 \(remoteLayoutName) 实体布局，左右引导线分别指向对应的电脑动作。")
+                Text("正在编辑：\(model.modeDisplay) · 当前布局：\(remoteLayoutName)")
                     .font(.system(size: 10))
                     .foregroundStyle(theme.text(0.42))
             }
 
             Spacer()
 
-            HStack(spacing: 2) {
-                ForEach(MappingMode.allCases) { item in
-                    Button {
-                        mode = item
-                    } label: {
-                        Text(item.label)
-                            .font(.system(size: 9.5, weight: .medium))
-                            .foregroundStyle(mode == item ? theme.selectedText : theme.text(0.52))
-                            .frame(maxWidth: .infinity, minHeight: 24)
-                            .background(
-                                Capsule()
-                                    .fill(mode == item ? theme.selectedFill : Color.clear)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(2)
-            .frame(width: 210)
-            .background(
-                Capsule()
-                    .fill(theme.text(0.055))
-                    .overlay(Capsule().strokeBorder(theme.text(0.07), lineWidth: 1))
-            )
-
-            Button("鼠标模式") { bindings.apply(.mouse) }
-                .buttonStyle(.plain)
-                .font(.system(size: 9.5, weight: .medium))
-                .foregroundStyle(theme.text(0.72))
-                .padding(.horizontal, 10)
-                .frame(height: 26)
-                .background(Capsule().fill(theme.text(0.06)).overlay(Capsule().strokeBorder(theme.text(0.08), lineWidth: 1)))
-
-            Button("DSH 键盘") { bindings.apply(.dshKeyboard) }
-                .buttonStyle(.plain)
-                .font(.system(size: 9.5, weight: .medium))
-                .foregroundStyle(theme.text(0.72))
-                .padding(.horizontal, 10)
-                .frame(height: 26)
-                .background(Capsule().fill(theme.text(0.06)).overlay(Capsule().strokeBorder(theme.text(0.08), lineWidth: 1)))
-
-            Button("恢复默认") { bindings.reset() }
-                .buttonStyle(.plain)
-                .font(.system(size: 9))
-                .foregroundStyle(theme.text(0.4))
+            connectionBadge
         }
         .padding(.horizontal, 22)
         .padding(.top, 16)
+        .padding(.bottom, 10)
+    }
+
+    private var connectionBadge: some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(model.connected ? Color(red: 0.22, green: 0.78, blue: 0.48) : theme.text(0.24))
+                .frame(width: 7, height: 7)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(model.connected ? "已连接" : "未连接")
+                    .font(.system(size: 9.5, weight: .semibold))
+                    .foregroundStyle(theme.text(model.connected ? 0.82 : 0.48))
+                Text(connectionDetail)
+                    .font(.system(size: 8))
+                    .foregroundStyle(theme.text(0.40))
+                    .lineLimit(1)
+            }
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(theme.text(0.045))
+                .overlay(Capsule().strokeBorder(theme.text(0.07), lineWidth: 1))
+        )
+    }
+
+    private var connectionDetail: String {
+        guard model.connected else { return "等待遥控器连接" }
+        let transport = model.isWired ? "USB" : "蓝牙"
+        let name = model.remoteName.isEmpty ? model.resolvedRemoteKind.label : model.remoteName
+        if model.remoteType != .automatic,
+           let previewKind = model.remoteType.kind,
+           previewKind != model.connectedRemoteKind {
+            return "\(name) · \(transport) · 预览 \(previewKind.shortLabel)"
+        }
+        return "\(name) · \(transport)"
+    }
+
+    private var toolbar: some View {
+        HStack(alignment: .center, spacing: 14) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("编辑方式")
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundStyle(theme.text(0.35))
+                HStack(spacing: 2) {
+                    ForEach(MappingMode.allCases) { item in
+                        Button {
+                            mode = item
+                        } label: {
+                            Text(item.label)
+                                .font(.system(size: 9.5, weight: .medium))
+                                .foregroundStyle(mode == item ? theme.selectedText : theme.text(0.52))
+                                .frame(maxWidth: .infinity, minHeight: 24)
+                                .background(
+                                    Capsule().fill(mode == item ? theme.selectedFill : Color.clear)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(2)
+                .frame(width: 180)
+                .background(
+                    Capsule()
+                        .fill(theme.text(0.055))
+                        .overlay(Capsule().strokeBorder(theme.text(0.07), lineWidth: 1))
+                )
+            }
+
+            Divider().frame(height: 30).opacity(0.6)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("遥控器")
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundStyle(theme.text(0.35))
+                Picker("", selection: Binding(
+                    get: { model.remoteType },
+                    set: { model.setRemoteType($0) }
+                )) {
+                    ForEach(RemoteType.allCases) { type in
+                        Text(type.label).tag(type)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 200)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("快速预设")
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundStyle(theme.text(0.35))
+                HStack(spacing: 6) {
+                    Button("鼠标模式") { bindings.apply(.mouse) }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(theme.text(0.68))
+                        .padding(.horizontal, 9)
+                        .frame(height: 24)
+                        .background(Capsule().fill(theme.text(0.06)).overlay(Capsule().strokeBorder(theme.text(0.08), lineWidth: 1)))
+                    Button("DSH 键盘") { bindings.apply(.dshKeyboard) }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(theme.text(0.68))
+                        .padding(.horizontal, 9)
+                        .frame(height: 24)
+                        .background(Capsule().fill(theme.text(0.06)).overlay(Capsule().strokeBorder(theme.text(0.08), lineWidth: 1)))
+                    Button("恢复默认") { bindings.reset() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 8.5))
+                        .foregroundStyle(theme.text(0.40))
+                }
+            }
+        }
+        .padding(.horizontal, 22)
         .padding(.bottom, 8)
     }
 
@@ -760,7 +834,7 @@ final class MappingWindowController: NSObject, NSWindowDelegate {
         if window == nil {
             let hosting = NSHostingView(rootView: MappingSettingsView(model: model, bindings: model.bindings))
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 900, height: 660),
+                contentRect: NSRect(x: 0, y: 0, width: 900, height: 720),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false

@@ -30,9 +30,37 @@ enum RemoteButton: String, CaseIterable, Identifiable {
     }
 }
 
+enum RemoteKind: String, CaseIterable, Identifiable {
+    case apple
+    case xiaomi
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .apple: return "Siri Remote A2854"
+        case .xiaomi: return "小米蓝牙遥控器 2 Pro"
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .apple: return "A2854"
+        case .xiaomi: return "RC003"
+        }
+    }
+}
+
 private enum RemoteProfile: Equatable {
     case appleSiriRemote
     case xiaomiRC003
+
+    var kind: RemoteKind {
+        switch self {
+        case .appleSiriRemote: return .apple
+        case .xiaomiRC003: return .xiaomi
+        }
+    }
 
     var displayName: String {
         switch self {
@@ -57,6 +85,7 @@ final class RemoteManager {
     private var didReportConnection = false
     private var isRunning = false
     private(set) var transport: String?
+    private(set) var connectedKind: RemoteKind?
     var isListening: Bool { isRunning }
 
     private let appleVendorID = 0x004C
@@ -125,6 +154,7 @@ final class RemoteManager {
         }
 
         didReportConnection = false
+        connectedKind = nil
         onConnection?(false, nil)
     }
 
@@ -192,6 +222,7 @@ final class RemoteManager {
         IOHIDDeviceScheduleWithRunLoop(device, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
         devices.append(device)
         transport = IOHIDDeviceGetProperty(device, kIOHIDTransportKey as CFString) as? String
+        connectedKind = remoteProfile.kind
 
         if !didReportConnection {
             didReportConnection = true
@@ -217,6 +248,7 @@ final class RemoteManager {
         if devices.isEmpty {
             didReportConnection = false
             transport = nil
+            connectedKind = nil
             states.removeAll()
             xiaomiPressed.removeAll()
             onConnection?(false, nil)

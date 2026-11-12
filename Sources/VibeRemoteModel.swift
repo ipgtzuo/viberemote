@@ -5,10 +5,36 @@ import Foundation
 import IOKit.hidsystem
 import SwiftUI
 
+enum RemoteType: String, CaseIterable, Identifiable {
+    case automatic
+    case apple
+    case xiaomi
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .automatic: return "自动跟随连接"
+        case .apple: return "Siri Remote A2854"
+        case .xiaomi: return "小米蓝牙遥控器 2 Pro"
+        }
+    }
+
+    var kind: RemoteKind? {
+        switch self {
+        case .automatic: return nil
+        case .apple: return .apple
+        case .xiaomi: return .xiaomi
+        }
+    }
+}
+
 @MainActor
 final class VibeRemoteModel: ObservableObject {
     @Published private(set) var connected = false
     @Published private(set) var remoteName = ""
+    @Published private(set) var remoteType: RemoteType = .automatic
+    @Published private(set) var connectedRemoteKind: RemoteKind?
     @Published private(set) var status = "正在启动…"
     @Published private(set) var isDictating = false
     @Published private(set) var lastAction = ""
@@ -40,6 +66,10 @@ final class VibeRemoteModel: ObservableObject {
 
     var preferredColorScheme: ColorScheme? {
         appearanceMode.colorScheme
+    }
+
+    var resolvedRemoteKind: RemoteKind {
+        remoteType.kind ?? connectedRemoteKind ?? .apple
     }
 
     var modeDisplay: String {
@@ -117,10 +147,19 @@ final class VibeRemoteModel: ObservableObject {
         UserDefaults.standard.set(mode.rawValue, forKey: "vibeRemote.appearance")
     }
 
+    func setRemoteType(_ type: RemoteType) {
+        remoteType = type
+        UserDefaults.standard.set(type.rawValue, forKey: "vibeRemote.remoteType")
+    }
+
     init(preview: Bool = false) {
         if let raw = UserDefaults.standard.string(forKey: "vibeRemote.appearance"),
            let mode = AppearanceMode(rawValue: raw) {
             appearanceMode = mode
+        }
+        if let raw = UserDefaults.standard.string(forKey: "vibeRemote.remoteType"),
+           let type = RemoteType(rawValue: raw) {
+            remoteType = type
         }
         let savedMode = UserDefaults.standard.string(forKey: "vibeRemote.appMode")
             .flatMap(AppMode.init(rawValue:)) ?? .dsh
@@ -140,6 +179,7 @@ final class VibeRemoteModel: ObservableObject {
 
         if preview {
             connected = true
+            connectedRemoteKind = .apple
             remoteName = "Siri Remote (A2854)"
             status = "已连接 · 等待按键"
             accessibilityGranted = true
@@ -276,6 +316,7 @@ final class VibeRemoteModel: ObservableObject {
             guard let self else { return }
             self.connected = connected
             self.remoteName = name ?? ""
+            self.connectedRemoteKind = connected ? self.remote.connectedKind : nil
             self.isWired = self.remote.transport == "USB"
             if connected {
                 self.refreshBattery()

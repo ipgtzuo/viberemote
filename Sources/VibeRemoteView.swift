@@ -825,8 +825,8 @@ struct VibeRemoteMenuLabel: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            RemoteGlyph(kind: model.resolvedRemoteKind)
-                .frame(width: 12, height: 15)
+            Image(systemName: model.resolvedRemoteKind == .apple ? "appletvremote.gen3" : "appletvremote.gen4")
+                .font(.system(size: 11.5, weight: .medium))
                 .foregroundStyle(model.isDictating ? Color.orange : Color.primary)
             Circle()
                 .fill(model.connected ? Color(red: 0.36, green: 0.92, blue: 0.64) : Color.gray.opacity(0.5))

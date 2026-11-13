@@ -278,8 +278,8 @@ struct VibeRemoteView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                Image(systemName: displayKind == .xiaomi ? "dot.radiowaves.left.and.right" : "appletvremote.gen3")
-                    .font(.system(size: 13, weight: .bold))
+                RemoteGlyph(kind: displayKind)
+                    .frame(width: 22, height: 24)
                     .foregroundStyle(.white.opacity(0.94))
             }
             .frame(width: 30, height: 30)
@@ -414,10 +414,9 @@ struct VibeRemoteView: View {
             HStack(spacing: 0) {
                 ZStack {
                     HStack(spacing: 8) {
-                        Image(systemName: displayKind == .xiaomi ? "dot.radiowaves.left.and.right" : "appletvremote.gen3")
-                            .font(.system(size: 15, weight: .medium))
+                        RemoteGlyph(kind: displayKind)
                             .foregroundStyle(model.selectedRemoteConnected ? Color(red: 0.36, green: 0.92, blue: 0.64) : theme.text(0.32))
-                            .frame(width: 17)
+                            .frame(width: 17, height: 19)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("遥控器")
@@ -777,18 +776,64 @@ struct VibeRemoteView: View {
     }
 }
 
+
+struct RemoteGlyph: View {
+    let kind: RemoteKind
+
+    var body: some View {
+        if kind == .apple {
+            Image(systemName: "appletvremote.gen3")
+                .resizable()
+                .scaledToFit()
+        } else {
+            GeometryReader { proxy in
+                let line = max(0.75, min(proxy.size.width, proxy.size.height) * 0.055)
+                XiaomiRemoteGlyph()
+                    .stroke(style: StrokeStyle(lineWidth: line, lineCap: .round, lineJoin: .round))
+            }
+        }
+    }
+}
+
+private struct XiaomiRemoteGlyph: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+
+        path.addRoundedRect(
+            in: CGRect(x: rect.minX + w * 0.18, y: rect.minY + h * 0.03,
+                       width: w * 0.64, height: h * 0.94),
+            cornerSize: CGSize(width: w * 0.20, height: w * 0.20)
+        )
+
+        path.addEllipse(in: CGRect(x: rect.minX + w * 0.33, y: rect.minY + h * 0.11,
+                                   width: w * 0.34, height: w * 0.34))
+
+        path.addRoundedRect(
+            in: CGRect(x: rect.minX + w * 0.44, y: rect.minY + h * 0.64,
+                       width: w * 0.12, height: h * 0.18),
+            cornerSize: CGSize(width: w * 0.06, height: w * 0.06)
+        )
+
+        return path
+    }
+}
+
 struct VibeRemoteMenuLabel: View {
     @ObservedObject var model: VibeRemoteModel
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: model.isDictating ? "mic.fill" : "appletvremote.gen3")
-                .font(.system(size: 11, weight: .medium))
+            RemoteGlyph(kind: model.resolvedRemoteKind)
+                .frame(width: 12, height: 15)
                 .foregroundStyle(model.isDictating ? Color.orange : Color.primary)
             Circle()
                 .fill(model.connected ? Color(red: 0.36, green: 0.92, blue: 0.64) : Color.gray.opacity(0.5))
                 .frame(width: 4, height: 4)
         }
-        .help(model.connected ? "VibeRemote — Siri Remote 已连接" : "VibeRemote — 等待 Siri Remote")
+        .help(model.selectedRemoteConnected
+              ? "VibeRemote — \(model.resolvedRemoteKind.label) 已连接"
+              : "VibeRemote — 等待 \(model.resolvedRemoteKind.shortLabel)")
     }
 }

@@ -795,7 +795,7 @@ struct MappingSettingsView: View {
             Circle()
                 .fill(model.isMappingWindowOpen ? Color(red: 1.0, green: 0.66, blue: 0.28) : theme.text(0.25))
                 .frame(width: 4, height: 4)
-            Text("语音使用 Mac 麦克风 + Fn；遥控器麦克风不被 macOS 暴露")
+            Text("语音调用系统听写，使用 Mac 麦克风；遥控器麦克风暂未接入")
                 .font(.system(size: 8))
                 .foregroundStyle(theme.text(0.28))
             Spacer()

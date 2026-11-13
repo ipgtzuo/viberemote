@@ -25,7 +25,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .dictation: return "按住语音（Fn）"
+        case .dictation: return "语音听写（切换）"
         case .send: return "发送 / Return"
         case .sendCommandReturn: return "发送 / Command+Return"
         case .stop: return "停止 / Escape"

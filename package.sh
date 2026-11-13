@@ -1,7 +1,8 @@
 #!/bin/zsh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-DMG="$ROOT/dist/VibeRemote-1.7.dmg"
+VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT/Resources/Info.plist")"
+DMG="$ROOT/dist/VibeRemote-${VERSION}.dmg"
 STAGE="$ROOT/.build/dmg"
 rm -rf "$STAGE"
 mkdir -p "$STAGE"

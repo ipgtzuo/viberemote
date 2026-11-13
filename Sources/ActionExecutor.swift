@@ -11,6 +11,7 @@ final class ActionExecutor {
     private let bindings: ButtonBindingStore
     private var functionDown = false
     private var dictationViaMenu = false
+    private var selfTestDictating = false
     private var selectDown = false
     private var scrollMode = false
 
@@ -23,6 +24,7 @@ final class ActionExecutor {
     }
 
     var isSelectDown: Bool { selectDown }
+    var isSelfTestDictating: Bool { selfTestDictating }
 
     func movePointer(dx: CGFloat, dy: CGFloat) {
         guard dx != 0 || dy != 0 else { return }
@@ -128,6 +130,26 @@ final class ActionExecutor {
         case .none:
             break
         }
+    }
+
+    @discardableResult
+    func toggleSelfTestDictation() -> Bool {
+        guard AXIsProcessTrusted() else {
+            onAction?("需要辅助功能权限", "exclamationmark.triangle")
+            return false
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        postFunctionTap()
+        selfTestDictating.toggle()
+        onAction?(selfTestDictating ? "测试听写中…" : "测试听写结束", selfTestDictating ? "mic.fill" : "mic.slash")
+        return selfTestDictating
+    }
+
+    func endSelfTestDictationIfNeeded() {
+        guard selfTestDictating else { return }
+        postFunctionTap()
+        selfTestDictating = false
+        onAction?("测试听写结束", "mic.slash")
     }
 
     func beginDictation() {

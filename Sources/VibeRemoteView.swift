@@ -336,6 +336,8 @@ struct VibeRemoteView: View {
                         }
                     }
                     Divider()
+                    Button("语音自检…") { model.openVoiceSelfTest() }
+                    Button("首次设置向导…") { model.showOnboarding() }
                     Button("打开按键映射…") { model.openMappingSettings() }
                     Button("重新连接遥控器") { model.restartRemote() }
                     Divider()
@@ -766,7 +768,7 @@ struct VibeRemoteView: View {
                 .foregroundStyle(theme.text(0.32))
                 .lineLimit(1)
             Spacer(minLength: 4)
-            Text("v1.7")
+            Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8")")
                 .font(.system(size: 7))
                 .foregroundStyle(theme.text(0.22))
         }

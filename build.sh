@@ -25,6 +25,7 @@ xcrun swiftc \
   "$ROOT/Sources/TouchpadManager.swift" \
   "$ROOT/Sources/MappingSettingsView.swift" \
   "$ROOT/Sources/VibeRemoteModel.swift" \
+  "$ROOT/Sources/OnboardingView.swift" \
   "$ROOT/Sources/VibeRemoteView.swift" \
   "$ROOT/Sources/VibeRemoteApp.swift" \
   -o "$BIN"
@@ -43,6 +44,13 @@ for asset in BrandDeepSeek.png BrandWorkBuddy.png BrandDoubao.png; do
   fi
 done
 xattr -cr "$APP" 2>/dev/null || true
-dot_clean -m "$APP" 2>/dev/null || true
-codesign --force --deep --sign - "$APP" >/dev/null
+# Sign a fresh copy: xattrs inherited from the workspace can make codesign
+# reject the bundle as "resource fork, Finder information, or similar detritus".
+SIGN_TMP="$(mktemp -d)/VibeRemote.app"
+ditto "$APP" "$SIGN_TMP"
+xattr -cr "$SIGN_TMP" 2>/dev/null || true
+codesign --force --deep --sign - "$SIGN_TMP" >/dev/null
+rm -rf "$APP"
+ditto "$SIGN_TMP" "$APP"
+rm -rf "$(dirname "$SIGN_TMP")"
 echo "Built $APP"

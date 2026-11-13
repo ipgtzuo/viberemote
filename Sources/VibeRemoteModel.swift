@@ -47,6 +47,9 @@ final class VibeRemoteModel: ObservableObject {
     @Published private(set) var isWired = false
     @Published private(set) var batteryLoading = false
     @Published private(set) var isMappingWindowOpen = false
+    @Published private(set) var isOnboardingOpen = false
+    @Published private(set) var isVoiceSelfTestOpen = false
+    @Published private(set) var selfTestDictating = false
     @Published private(set) var appearanceMode: AppearanceMode = .auto
     @Published private(set) var selectedMode: AppMode = .dsh
     @Published private(set) var resolvedMode: AppMode = .dsh
@@ -234,6 +237,7 @@ final class VibeRemoteModel: ObservableObject {
             NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver)
             self.wakeObserver = nil
         }
+        actions.endSelfTestDictationIfNeeded()
         actions.releaseAll()
         touchpad.stop()
         remote.stop()
@@ -285,6 +289,63 @@ final class VibeRemoteModel: ObservableObject {
         if !open("x-apple.systempreferences:com.apple.Bluetooth-Settings.extension") {
             _ = open("x-apple.systempreferences:com.apple.preference.bluetooth")
         }
+    }
+
+    func showOnboarding() {
+        isOnboardingOpen = true
+        OnboardingWindowController.shared.show(model: self)
+    }
+
+    func finishOnboarding() {
+        UserDefaults.standard.set(true, forKey: "vibeRemote.didOnboard")
+        OnboardingWindowController.shared.close()
+        isOnboardingOpen = false
+    }
+
+    func onboardingWindowDidClose() {
+        isOnboardingOpen = false
+    }
+
+    func openVoiceSelfTest() {
+        isVoiceSelfTestOpen = true
+        VoiceSelfTestWindowController.shared.show(model: self)
+    }
+
+    func closeVoiceSelfTest() {
+        actions.endSelfTestDictationIfNeeded()
+        selfTestDictating = false
+        VoiceSelfTestWindowController.shared.close()
+        isVoiceSelfTestOpen = false
+    }
+
+    func voiceSelfTestWindowDidClose() {
+        actions.endSelfTestDictationIfNeeded()
+        selfTestDictating = false
+        isVoiceSelfTestOpen = false
+    }
+
+    func toggleSelfTestDictation() {
+        selfTestDictating = actions.toggleSelfTestDictation()
+    }
+
+    func voiceDiagnosticReport() -> String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let os = ProcessInfo.processInfo.operatingSystemVersionString
+        let remotes = RemoteKind.allCases
+            .filter { connectedRemoteKinds.contains($0) }
+            .map { "\($0.shortLabel)" }
+            .joined(separator: " / ")
+        return """
+        VibeRemote \(version) 语音诊断
+        macOS: \(os)
+        输入监控: \(inputMonitoringGranted ? "已授权" : "未授权")
+        辅助功能: \(accessibilityGranted ? "已授权" : "未授权")
+        遥控器: \(remotes.isEmpty ? "未连接" : remotes)
+        输入目标: \(resolvedMode.label)
+        最近按键: \(lastRaw.isEmpty ? "无" : lastRaw)
+        最近动作: \(lastAction.isEmpty ? "无" : lastAction)
+        听写状态: \(selfTestDictating ? "自检听写中" : (isDictating ? "听写中" : "未开始"))
+        """
     }
 
     func openMappingSettings() {
@@ -362,6 +423,10 @@ final class VibeRemoteModel: ObservableObject {
                 return
             }
             if button == .siri, self.bindings.action(for: .siri) == .dictation {
+                if self.isVoiceSelfTestOpen {
+                    if pressed { self.toggleSelfTestDictation() }
+                    return
+                }
                 self.isDictating = pressed
                 if pressed {
                     self.hud.show("听写中…", symbol: "mic.fill", duration: 8)

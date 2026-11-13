@@ -47,6 +47,13 @@ struct VibeRemoteApp: App {
                 VibePanelPreviewController.shared.show(model: model)
             }
         }
+        let forceOnboarding = CommandLine.arguments.contains("--onboarding")
+        let suppressOnboarding = CommandLine.arguments.contains("--panel") || CommandLine.arguments.contains("--mapping")
+        if forceOnboarding || (!suppressOnboarding && !UserDefaults.standard.bool(forKey: "vibeRemote.didOnboard")) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + (forceOnboarding ? 0.8 : 1.4)) {
+                VibeRemoteModel.shared?.showOnboarding()
+            }
+        }
     }
 
     var body: some Scene {

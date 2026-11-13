@@ -8,7 +8,7 @@
 
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111111?logo=apple)](https://www.apple.com/macos/)
 [![Swift 5](https://img.shields.io/badge/Swift-5-F05138?logo=swift)](https://swift.org)
-[![Version](https://img.shields.io/badge/version-1.7-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.8-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ![VibeRemote 菜单栏面板](docs/panel.jpg)
@@ -39,6 +39,8 @@
 | 自动切换 | 跟随前台 App 切换对应模式，每个模式独立保存键位 |
 | 触摸板 | 蓝牙连接后，一指移动、两指滚动 |
 | 电量显示 | 蓝牙连接时读取遥控器电量 |
+| 首次向导 | 连接、权限、语音测试，三步完成设置 |
+| 语音自检 | 独立测试窗口，显示权限、按键、听写状态并可复制诊断 |
 | 主题 | 自动 / 淡色 / 深色 |
 | 本地运行 | 不上传按键、语音或使用数据 |
 

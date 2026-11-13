@@ -1,0 +1,15 @@
+标题：
+电视遥控器，居然能写代码？
+
+正文：
+60 秒看懂 VibeRemote：把 Siri Remote / 小米 RC003-MS 变成 Vibe Coding 手柄。
+
+按一下语音键听写，TV 发送，返回停止；
+方向环当鼠标，Select 点按拖拽；
+DSH / WorkBuddy / 豆包 自动切换键位；
+两个遥控器同时连接，菜单栏一眼看清。
+
+Mac 菜单栏小工具，本地运行，不上传。
+GitHub：ipgtzuo/viberemote
+
+#vibecoding #AI编程 #macOS #效率工具 #程序员 #DeepSeek #遥控器

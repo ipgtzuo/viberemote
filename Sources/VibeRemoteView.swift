@@ -768,7 +768,7 @@ struct VibeRemoteView: View {
                 .foregroundStyle(theme.text(0.32))
                 .lineLimit(1)
             Spacer(minLength: 4)
-            Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8")")
+            Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8.1")")
                 .font(.system(size: 7))
                 .foregroundStyle(theme.text(0.22))
         }

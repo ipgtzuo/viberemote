@@ -8,7 +8,7 @@
 
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111111?logo=apple)](https://www.apple.com/macos/)
 [![Swift 5](https://img.shields.io/badge/Swift-5-F05138?logo=swift)](https://swift.org)
-[![Version](https://img.shields.io/badge/version-1.8-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.8.1-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ![VibeRemote 菜单栏面板](docs/panel.jpg)
@@ -29,6 +29,7 @@
 
 | 功能 | 说明 |
 |---|---|
+| Universal | Apple Silicon 与 Intel Mac 通用二进制 |
 | 双遥控器 | Siri Remote A2540 / A2854 与 Xiaomi RC003-MS 可同时连接 |
 | 遥控器选择 | 面板内直接切换自动 / Siri / 小米，预览各自布局 |
 | 连接状态 | 显示已连接数量、设备名、蓝牙传输和电量 |

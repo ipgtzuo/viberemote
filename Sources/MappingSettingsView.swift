@@ -799,7 +799,7 @@ struct MappingSettingsView: View {
                 .font(.system(size: 8))
                 .foregroundStyle(theme.text(0.28))
             Spacer()
-            Text("VibeRemote \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8") · 映射立即生效")
+            Text("VibeRemote \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8.1") · 映射立即生效")
                 .font(.system(size: 7.5))
                 .foregroundStyle(theme.text(0.24))
         }

@@ -15,7 +15,7 @@ enum RemoteType: String, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .automatic: return "自动跟随连接"
-        case .apple: return "Siri Remote A2854"
+        case .apple: return "Siri Remote A2540"
         case .xiaomi: return "小米蓝牙遥控器 2 Pro"
         }
     }
@@ -35,6 +35,8 @@ final class VibeRemoteModel: ObservableObject {
     @Published private(set) var remoteName = ""
     @Published private(set) var remoteType: RemoteType = .automatic
     @Published private(set) var connectedRemoteKind: RemoteKind?
+    @Published private(set) var connectedRemoteKinds: Set<RemoteKind> = []
+    @Published private(set) var connectedRemoteNames: [RemoteKind: String] = [:]
     @Published private(set) var status = "正在启动…"
     @Published private(set) var isDictating = false
     @Published private(set) var lastAction = ""
@@ -70,6 +72,19 @@ final class VibeRemoteModel: ObservableObject {
 
     var resolvedRemoteKind: RemoteKind {
         remoteType.kind ?? connectedRemoteKind ?? .apple
+    }
+
+    /// 当前选中的遥控器布局是否对应真正连上的设备。
+    /// `connected` 是全局状态；手动选中小米时不能沿用 Siri 的连接状态。
+    var selectedRemoteConnected: Bool {
+        guard connected else { return false }
+        guard let selected = remoteType.kind else { return true }
+        if connectedRemoteKinds.contains(selected) { return true }
+        return connectedRemoteKind == selected
+    }
+
+    func remoteName(for kind: RemoteKind) -> String {
+        connectedRemoteNames[kind] ?? (connectedRemoteKind == kind ? remoteName : kind.label)
     }
 
     var modeDisplay: String {
@@ -180,7 +195,7 @@ final class VibeRemoteModel: ObservableObject {
         if preview {
             connected = true
             connectedRemoteKind = .apple
-            remoteName = "Siri Remote (A2854)"
+            remoteName = "Siri Remote (A2540)"
             status = "已连接 · 等待按键"
             accessibilityGranted = true
             inputMonitoringGranted = true
@@ -317,6 +332,8 @@ final class VibeRemoteModel: ObservableObject {
             self.connected = connected
             self.remoteName = name ?? ""
             self.connectedRemoteKind = connected ? self.remote.connectedKind : nil
+            self.connectedRemoteKinds = connected ? self.remote.connectedKinds : []
+            self.connectedRemoteNames = connected ? self.remote.connectedNames : [:]
             self.isWired = self.remote.transport == "USB"
             if connected {
                 self.refreshBattery()

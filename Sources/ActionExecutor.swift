@@ -10,7 +10,7 @@ final class ActionExecutor {
     var targetBundleID: String? = "com.deepseek.dsh"
     private let bindings: ButtonBindingStore
     private var functionDown = false
-    private var pendingFunction: DispatchWorkItem?
+    private var dictationViaMenu = false
     private var selectDown = false
     private var scrollMode = false
 
@@ -47,7 +47,11 @@ final class ActionExecutor {
 
         switch action {
         case .dictation:
-            if pressed { beginDictation() } else { endDictation() }
+            if pressed {
+                // Toggle: a quick BLE press/release otherwise starts and stops
+                // dictation in the same instant.
+                if functionDown { endDictation() } else { beginDictation() }
+            }
 
         case .send:
             if pressed {
@@ -128,28 +132,63 @@ final class ActionExecutor {
 
     func beginDictation() {
         guard !functionDown else { return }
+        functionDown = true
         activateTarget()
+        onAction?("听写中…", "mic.fill")
 
-        pendingFunction?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self, !self.functionDown else { return }
-            self.functionDown = true
-            self.postKey(CGKeyCode(kVK_Function), down: true, flags: .maskSecondaryFn)
-            self.onAction?("按住 Siri 说话", "mic.fill")
+        // Prefer the app's Edit > Start Dictation menu item: it is independent of
+        // the Globe-key shortcut, which can be assigned to the emoji picker.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
+            guard let self, self.functionDown else { return }
+            if self.pressDictationMenuItem(stop: false) {
+                self.dictationViaMenu = true
+            } else {
+                self.postFunctionTap()
+            }
         }
-        pendingFunction = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16, execute: work)
     }
 
     func endDictation() {
-        pendingFunction?.cancel()
-        pendingFunction = nil
-
-        if functionDown {
-            postKey(CGKeyCode(kVK_Function), down: false, flags: .maskSecondaryFn)
-            functionDown = false
-            onAction?("听写结束", "mic.slash")
+        guard functionDown else { return }
+        functionDown = false
+        if dictationViaMenu {
+            dictationViaMenu = false
+            if !pressDictationMenuItem(stop: true) { postFunctionTap() }
+        } else {
+            postFunctionTap()
         }
+        onAction?("听写结束", "mic.slash")
+    }
+
+    private func pressDictationMenuItem(stop: Bool) -> Bool {
+        guard let front = NSWorkspace.shared.frontmostApplication else { return false }
+        let app = AXUIElementCreateApplication(front.processIdentifier)
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(app, kAXMenuBarAttribute as CFString, &value) == .success,
+              let menuBar = value else { return false }
+        let tokens = stop ? ["停止听写", "Stop Dictation"] : ["开始听写", "Start Dictation"]
+        return pressMenuItem(menuBar as! AXUIElement, tokens: tokens)
+    }
+
+    private func pressMenuItem(_ element: AXUIElement, tokens: [String]) -> Bool {
+        var titleValue: CFTypeRef?
+        AXUIElementCopyAttributeValue(element, kAXTitleAttribute as CFString, &titleValue)
+        let title = titleValue as? String ?? ""
+        if tokens.contains(where: { title.contains($0) }) {
+            return AXUIElementPerformAction(element, kAXPressAction as CFString) == .success
+        }
+        var childrenValue: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &childrenValue) == .success,
+              let children = childrenValue as? [AXUIElement] else { return false }
+        for child in children {
+            if pressMenuItem(child, tokens: tokens) { return true }
+        }
+        return false
+    }
+
+    private func postFunctionTap() {
+        postKey(CGKeyCode(kVK_Function), down: true, flags: .maskSecondaryFn)
+        postKey(CGKeyCode(kVK_Function), down: false, flags: .maskSecondaryFn)
     }
 
     func releaseAll() {

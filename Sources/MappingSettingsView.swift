@@ -45,21 +45,21 @@ private let mappingEntries: [MappingEntry] = [
     .init(button: .select, side: .left, y: 270, source: CGPoint(x: 450, y: 97)),
     .init(button: .back, side: .left, y: 365, source: CGPoint(x: 415.5, y: 199)),
     .init(button: .playPause, side: .left, y: 460, source: CGPoint(x: 415.5, y: 265)),
-    .init(button: .tv, side: .right, y: 120, source: CGPoint(x: 484.5, y: 199)),
-    .init(button: .siri, side: .right, y: 230, source: CGPoint(x: 524, y: 181)),
-    .init(button: .ringRight, side: .right, y: 340, source: CGPoint(x: 497, y: 97)),
-    .init(button: .ringDown, side: .right, y: 450, source: CGPoint(x: 450, y: 205))
+    .init(button: .tv, side: .right, y: 405, source: CGPoint(x: 484.5, y: 199)),
+    .init(button: .siri, side: .right, y: 300, source: CGPoint(x: 524, y: 181)),
+    .init(button: .ringRight, side: .right, y: 80, source: CGPoint(x: 497, y: 97)),
+    .init(button: .ringDown, side: .right, y: 195, source: CGPoint(x: 450, y: 144))
 ]
 
 private let xiaomiMappingEntries: [MappingEntry] = [
-    .init(button: .siri, side: .left, y: 80, source: CGPoint(x: 450, y: 40)),
-    .init(button: .ringUp, side: .left, y: 155, source: CGPoint(x: 450, y: 72)),
-    .init(button: .ringLeft, side: .left, y: 240, source: CGPoint(x: 405, y: 125)),
-    .init(button: .select, side: .left, y: 325, source: CGPoint(x: 450, y: 125)),
-    .init(button: .back, side: .left, y: 410, source: CGPoint(x: 420, y: 250)),
-    .init(button: .tv, side: .right, y: 140, source: CGPoint(x: 450, y: 250)),
-    .init(button: .ringRight, side: .right, y: 250, source: CGPoint(x: 495, y: 125)),
-    .init(button: .ringDown, side: .right, y: 370, source: CGPoint(x: 450, y: 178))
+    .init(button: .ringUp, side: .left, y: 80, source: CGPoint(x: 450, y: 78)),
+    .init(button: .ringLeft, side: .left, y: 175, source: CGPoint(x: 406, y: 118)),
+    .init(button: .select, side: .left, y: 270, source: CGPoint(x: 450, y: 118)),
+    .init(button: .back, side: .left, y: 365, source: CGPoint(x: 423, y: 196)),
+    .init(button: .siri, side: .right, y: 80, source: CGPoint(x: 482, y: 41)),
+    .init(button: .tv, side: .right, y: 180, source: CGPoint(x: 476, y: 293)),
+    .init(button: .ringRight, side: .right, y: 300, source: CGPoint(x: 494, y: 118)),
+    .init(button: .ringDown, side: .right, y: 410, source: CGPoint(x: 450, y: 158))
 ]
 
 private func actionColor(_ action: ButtonAction, isDark: Bool) -> Color {
@@ -116,7 +116,9 @@ private struct MappingPanelBackground: View {
 private struct RemoteFaceKey: View {
     var systemName: String
     var iconSize: CGFloat = 15
+    var size: CGFloat = 46
     var selected: Bool
+    var pressed: Bool = false
     var action: () -> Void
 
     var body: some View {
@@ -142,8 +144,10 @@ private struct RemoteFaceKey: View {
             .overlay(
                 Circle().strokeBorder(selected ? Color(red: 1.0, green: 0.70, blue: 0.30) : .clear, lineWidth: 2)
             )
-            .frame(width: 46, height: 46)
+            .frame(width: size, height: size)
             .shadow(color: .black.opacity(0.28), radius: 2, y: 2)
+            .scaleEffect(pressed ? 0.92 : 1)
+            .animation(.easeOut(duration: 0.12), value: pressed)
             .onTapGesture(perform: action)
     }
 }
@@ -156,14 +160,15 @@ private struct RingKey: Identifiable {
 }
 
 private let ringKeys: [RingKey] = [
-    RingKey(button: .ringUp, point: CGPoint(x: 75, y: 50), symbol: "chevron.up"),
-    RingKey(button: .ringLeft, point: CGPoint(x: 28, y: 97), symbol: "chevron.left"),
-    RingKey(button: .ringRight, point: CGPoint(x: 122, y: 97), symbol: "chevron.right"),
-    RingKey(button: .ringDown, point: CGPoint(x: 75, y: 205), symbol: "chevron.down")
+    RingKey(button: .ringUp, point: CGPoint(x: 61, y: 15), symbol: "chevron.up"),
+    RingKey(button: .ringLeft, point: CGPoint(x: 15, y: 61), symbol: "chevron.left"),
+    RingKey(button: .ringRight, point: CGPoint(x: 107, y: 61), symbol: "chevron.right"),
+    RingKey(button: .ringDown, point: CGPoint(x: 61, y: 107), symbol: "chevron.down")
 ]
 
 struct RemoteDiagram: View {
     var selected: RemoteButton
+    var modelLabel: String = "A2540"
     var onSelect: (RemoteButton) -> Void
 
     private let bodyShape = RoundedRectangle(cornerRadius: 34, style: .continuous)
@@ -328,7 +333,7 @@ struct RemoteDiagram: View {
                 .position(x: 40.5, y: 331)
 
             VStack(spacing: 2) {
-                Text("A2854")
+                Text(modelLabel)
                     .font(.system(size: 5.5, weight: .semibold, design: .monospaced))
                     .foregroundStyle(Color(red: 0.38, green: 0.40, blue: 0.44).opacity(0.55))
                 Text("SIRI REMOTE")
@@ -351,125 +356,74 @@ private struct XiaomiRingKey: Identifiable {
 
 struct XiaomiRemoteDiagram: View {
     var selected: RemoteButton
+    var pressed: RemoteButton?
     var onSelect: (RemoteButton) -> Void
 
-    private let bodyShape = RoundedRectangle(cornerRadius: 34, style: .continuous)
     private let accent = Color(red: 1.0, green: 0.66, blue: 0.28)
+    private let imageHeight: CGFloat = 505
+    private let imageTop: CGFloat = 3.5
+    private let sourceAspect: CGFloat = 160.0 / 629.0
+    private var renderedWidth: CGFloat { imageHeight * sourceAspect }
+    private var renderedLeft: CGFloat { (150 - renderedWidth) / 2 }
 
-    private let ring: [XiaomiRingKey] = [
-        XiaomiRingKey(button: .ringUp, point: CGPoint(x: 60, y: 22), symbol: "▲"),
-        XiaomiRingKey(button: .ringLeft, point: CGPoint(x: 22, y: 60), symbol: "◀"),
-        XiaomiRingKey(button: .ringRight, point: CGPoint(x: 98, y: 60), symbol: "▶"),
-        XiaomiRingKey(button: .ringDown, point: CGPoint(x: 60, y: 98), symbol: "▼")
+    private struct Hotspot: Identifiable {
+        let button: RemoteButton
+        let x: CGFloat
+        let y: CGFloat
+        let diameter: CGFloat
+        var id: String { button.rawValue }
+    }
+
+    private let hotspots: [Hotspot] = [
+        .init(button: .siri, x: 0.752, y: 0.068, diameter: 32),
+        .init(button: .ringUp, x: 0.500, y: 0.1495, diameter: 30),
+        .init(button: .ringLeft, x: 0.156, y: 0.2258, diameter: 30),
+        .init(button: .select, x: 0.499, y: 0.2253, diameter: 42),
+        .init(button: .ringRight, x: 0.844, y: 0.2258, diameter: 30),
+        .init(button: .ringDown, x: 0.500, y: 0.3084, diameter: 30),
+        .init(button: .back, x: 0.291, y: 0.3817, diameter: 38),
+        .init(button: .tv, x: 0.703, y: 0.573, diameter: 38)
     ]
 
+    private var remoteImage: NSImage? {
+        guard let url = Bundle.main.url(forResource: "RC003MS", withExtension: "png") else { return nil }
+        return NSImage(contentsOf: url)
+    }
+
     var body: some View {
-        ZStack {
-            bodyShape
-                .fill(
-                    LinearGradient(
-                        stops: [
-                            .init(color: Color(red: 0.16, green: 0.17, blue: 0.19), location: 0),
-                            .init(color: Color(red: 0.075, green: 0.08, blue: 0.09), location: 0.5),
-                            .init(color: Color(red: 0.045, green: 0.05, blue: 0.058), location: 1)
-                        ],
-                        startPoint: UnitPoint(x: 0.28, y: 0),
-                        endPoint: UnitPoint(x: 0.72, y: 1)
-                    )
-                )
-                .overlay(bodyShape.strokeBorder(.white.opacity(0.10), lineWidth: 1))
-                .overlay(bodyShape.strokeBorder(.black.opacity(0.7), lineWidth: 1).padding(1))
-                .shadow(color: .black.opacity(0.5), radius: 20, y: 14)
-                .frame(width: 150, height: 470)
-                .position(x: 75, y: 255)
-
-            // Top microphone and power markings.
-            RemoteFaceKey(systemName: "mic", iconSize: 12, selected: selected == .siri, action: { onSelect(.siri) })
-                .position(x: 40, y: 48)
-            Image(systemName: "power")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.34))
-                .position(x: 110, y: 48)
-
-            // Circular direction pad with OK in the center.
-            ZStack {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color(red: 0.12, green: 0.125, blue: 0.14), Color(red: 0.045, green: 0.048, blue: 0.055)],
-                            center: UnitPoint(x: 0.5, y: 0.38),
-                            startRadius: 0,
-                            endRadius: 70
-                        )
-                    )
-                    .overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1))
-                    .overlay(Circle().strokeBorder(.black.opacity(0.75), lineWidth: 1).padding(1))
-
-                Circle()
-                    .strokeBorder(.white.opacity(0.06), lineWidth: 1)
-                    .padding(15)
-
-                ForEach(ring) { item in
-                    Text(item.symbol)
-                        .font(.system(size: 9))
-                        .foregroundStyle(.white.opacity(0.48))
-                        .frame(width: 24, height: 24)
-                        .overlay(
-                            Circle().strokeBorder(selected == item.button ? accent : .clear, lineWidth: 1.5)
-                        )
-                        .position(item.point)
-                        .onTapGesture { onSelect(item.button) }
-                }
-
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color(red: 0.16, green: 0.17, blue: 0.19), Color(red: 0.06, green: 0.065, blue: 0.075)],
-                            center: UnitPoint(x: 0.5, y: 0.42),
-                            startRadius: 0,
-                            endRadius: 30
-                        )
-                    )
-                    .overlay(Circle().strokeBorder(.white.opacity(0.10), lineWidth: 1))
-                    .overlay(Circle().strokeBorder(selected == .select ? accent : .clear, lineWidth: 2))
-                    .frame(width: 50, height: 50)
-                    .onTapGesture { onSelect(.select) }
+        ZStack(alignment: .topLeading) {
+            if let remoteImage {
+                Image(nsImage: remoteImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 131, height: imageHeight)
+                    .shadow(color: .black.opacity(0.38), radius: 16, y: 10)
+                    .position(x: 75, y: 256)
+            } else {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(white: 0.80))
+                    .frame(width: 131, height: imageHeight)
+                    .position(x: 75, y: 256)
             }
-            .frame(width: 120, height: 120)
-            .position(x: 75, y: 125)
-            .shadow(color: .black.opacity(0.35), radius: 4, y: 3)
 
-            // Back / home / menu row.
-            RemoteFaceKey(systemName: "chevron.backward", iconSize: 13, selected: selected == .back, action: { onSelect(.back) })
-                .position(x: 40, y: 250)
-            RemoteFaceKey(systemName: "house", iconSize: 13, selected: selected == .tv, action: { onSelect(.tv) })
-                .position(x: 75, y: 250)
-            RemoteFaceKey(systemName: "line.3.horizontal", iconSize: 13, selected: false, action: {})
-                .position(x: 110, y: 250)
-
-            // Volume rocker is decorative for now.
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .fill(Color.white.opacity(0.10))
-                .frame(width: 5, height: 64)
-                .overlay(
-                    VStack(spacing: 10) {
-                        Text("+").font(.system(size: 9, weight: .semibold))
-                        Text("−").font(.system(size: 9, weight: .semibold))
-                    }
-                    .foregroundStyle(.white.opacity(0.35))
-                )
-                .position(x: 145, y: 160)
-
-            VStack(spacing: 2) {
-                Text("RC003")
-                    .font(.system(size: 5.5, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.32))
-                Text("MI REMOTE")
-                    .font(.system(size: 4.5, weight: .medium, design: .monospaced))
-                    .tracking(0.6)
-                    .foregroundStyle(.white.opacity(0.20))
+            ForEach(hotspots) { spot in
+                let isSelected = selected == spot.button
+                let isPressed = pressed == spot.button
+                Circle()
+                    .fill(accent.opacity(isPressed ? 0.22 : 0))
+                    .overlay(
+                        Circle().strokeBorder(isSelected ? accent : .clear, lineWidth: 2)
+                    )
+                    .frame(width: spot.diameter, height: spot.diameter)
+                    .scaleEffect(isPressed ? 0.90 : 1)
+                    .animation(.easeOut(duration: 0.12), value: isPressed)
+                    .position(
+                        x: renderedLeft + spot.x * renderedWidth,
+                        y: imageTop + spot.y * imageHeight
+                    )
+                    .onTapGesture { onSelect(spot.button) }
             }
-            .position(x: 75, y: 455)
         }
         .frame(width: 150, height: 512)
     }
@@ -480,6 +434,7 @@ struct MappingSettingsView: View {
     @ObservedObject var bindings: ButtonBindingStore
     @State private var mode: MappingMode = .manual
     @State private var selected: RemoteButton = .siri
+    @State private var pressedButton: RemoteButton?
     @Environment(\.colorScheme) private var systemScheme
 
     private var resolvedScheme: ColorScheme { model.appearanceMode.colorScheme ?? systemScheme }
@@ -495,7 +450,13 @@ struct MappingSettingsView: View {
     }
 
     private var remoteLayoutName: String {
-        isXiaomi ? "Xiaomi RC003" : "Siri Remote A2854"
+        if isXiaomi { return "Xiaomi RC003-MS" }
+        if !model.remoteName.isEmpty { return model.remoteName }
+        return "Siri Remote (A2540)"
+    }
+
+    private var appleModelLabel: String {
+        model.remoteName.contains("A2854") ? "A2854" : "A2540"
     }
 
     var body: some View {
@@ -512,6 +473,10 @@ struct MappingSettingsView: View {
         .preferredColorScheme(model.preferredColorScheme)
         .onReceive(model.physicalButtonEvents) { button in
             selected = button
+            pressedButton = button
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                if pressedButton == button { pressedButton = nil }
+            }
         }
         .onChange(of: isXiaomi) { xiaomi in
             if xiaomi, !xiaomiMappingEntries.contains(where: { $0.button == selected }) {
@@ -542,13 +507,13 @@ struct MappingSettingsView: View {
     private var connectionBadge: some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(model.connected ? Color(red: 0.22, green: 0.78, blue: 0.48) : theme.text(0.24))
+                .fill(model.selectedRemoteConnected ? Color(red: 0.22, green: 0.78, blue: 0.48) : theme.text(0.30))
                 .frame(width: 7, height: 7)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(model.connected ? "已连接" : "未连接")
+                Text(model.selectedRemoteConnected ? "已连接" : "未连接")
                     .font(.system(size: 9.5, weight: .semibold))
-                    .foregroundStyle(theme.text(model.connected ? 0.82 : 0.48))
+                    .foregroundStyle(theme.text(model.selectedRemoteConnected ? 0.82 : 0.48))
                 Text(connectionDetail)
                     .font(.system(size: 8))
                     .foregroundStyle(theme.text(0.40))
@@ -565,14 +530,15 @@ struct MappingSettingsView: View {
     }
 
     private var connectionDetail: String {
-        guard model.connected else { return "等待遥控器连接" }
-        let transport = model.isWired ? "USB" : "蓝牙"
-        let name = model.remoteName.isEmpty ? model.resolvedRemoteKind.label : model.remoteName
-        if model.remoteType != .automatic,
-           let previewKind = model.remoteType.kind,
-           previewKind != model.connectedRemoteKind {
-            return "\(name) · \(transport) · 预览 \(previewKind.shortLabel)"
+        guard model.selectedRemoteConnected else {
+            if model.connected, let actual = model.connectedRemoteKind {
+                return "\(actual.shortLabel) 已连接 · 等待 \(model.resolvedRemoteKind.shortLabel)"
+            }
+            return "等待\(model.resolvedRemoteKind.shortLabel)连接"
         }
+        let kind = model.resolvedRemoteKind
+        let transport = kind == .xiaomi ? "蓝牙" : (model.isWired ? "USB" : "蓝牙")
+        let name = model.remoteName(for: kind)
         return "\(name) · \(transport)"
     }
 
@@ -707,12 +673,12 @@ struct MappingSettingsView: View {
             .allowsHitTesting(false)
 
             if isXiaomi {
-                XiaomiRemoteDiagram(selected: selected) { button in
+                XiaomiRemoteDiagram(selected: selected, pressed: pressedButton) { button in
                     selected = button
                 }
                 .position(x: 450, y: 256)
             } else {
-                RemoteDiagram(selected: selected) { button in
+                RemoteDiagram(selected: selected, modelLabel: appleModelLabel) { button in
                     selected = button
                 }
                 .position(x: 450, y: 256)

@@ -12,7 +12,7 @@ enum AppMode: String, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .automatic: return "自动"
-        case .dsh: return "DSH"
+        case .dsh: return "DeepSeek"
         case .workBuddy: return "WorkBuddy"
         case .doubao: return "豆包"
         case .generic: return "通用"
@@ -26,6 +26,16 @@ enum AppMode: String, CaseIterable, Identifiable {
         case .workBuddy: return "briefcase"
         case .doubao: return "bubble.left.and.bubble.right"
         case .generic: return "cursorarrow"
+        }
+    }
+
+    /// 各应用真实品牌标识（Resources 中的 PNG）；自动/通用仍使用 SF Symbol。
+    var logoName: String? {
+        switch self {
+        case .dsh: return "BrandDeepSeek"
+        case .workBuddy: return "BrandWorkBuddy"
+        case .doubao: return "BrandDoubao"
+        case .automatic, .generic: return nil
         }
     }
 

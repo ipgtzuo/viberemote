@@ -43,8 +43,8 @@ struct VibePanelBackground: View {
             }
             LinearGradient(
                 colors: [
-                    theme.panelTop.opacity(0.92),
-                    theme.panelBottom.opacity(0.96)
+                    theme.panelTop.opacity(0.985),
+                    theme.panelBottom.opacity(0.99)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -87,6 +87,7 @@ private struct VibeCard<Content: View>: View {
                         endPoint: .bottomTrailing
                     )
                 )
+                .allowsHitTesting(false)
             }
             .overlay {
                 shape.strokeBorder(
@@ -97,6 +98,7 @@ private struct VibeCard<Content: View>: View {
                     ),
                     lineWidth: 1
                 )
+                .allowsHitTesting(false)
             }
     }
 }
@@ -181,33 +183,81 @@ private struct PermissionChip: View {
 struct VibeRemoteView: View {
     @ObservedObject var model: VibeRemoteModel
     @ObservedObject var bindings: ButtonBindingStore
+    @State private var showRemotePicker = false
+    @State private var showModePicker = false
+    @State private var actionEditor: RemoteButton?
     @Environment(\.vibePreview) private var previewMode
     @Environment(\.colorScheme) private var systemScheme
 
     private var resolvedScheme: ColorScheme { model.appearanceMode.colorScheme ?? systemScheme }
     private var theme: VibeTheme { VibeTheme(resolvedScheme) }
 
+    private var displayKind: RemoteKind {
+        model.resolvedRemoteKind
+    }
+
+    private var remoteStatusDetail: String {
+        if model.selectedRemoteConnected {
+            if displayKind == .xiaomi {
+                return "小米 RC003-MS · 蓝牙"
+            }
+            let name = model.remoteName(for: .apple)
+            return "\(name) · \(model.batteryText)"
+        }
+        if model.connected, let actual = model.connectedRemoteKind {
+            return "\(actual.shortLabel) 已连接 · 等待 \(displayKind.shortLabel)"
+        }
+        return "打开蓝牙并唤醒"
+    }
+
+    private var remoteDisplayName: String {
+        switch displayKind {
+        case .apple: return "Siri Remote A2540"
+        case .xiaomi: return "小米遥控器 2 Pro"
+        }
+    }
+
+    private var voiceKeyLabel: String {
+        displayKind == .xiaomi ? "语音" : "Siri"
+    }
+
+    private var presetDisplay: String {
+        bindings.activePreset?.title ?? "自定义"
+    }
+
+    private var sendHint: String {
+        let action = bindings.action(for: .tv)
+        switch action {
+        case .send: return "松开 TV 发送"
+        case .sendCommandReturn: return "松开 TV ⌘发送"
+        default: return "松开 TV \(action.shortLabel)"
+        }
+    }
+
+    private var mappingButtons: [RemoteButton] {
+        [.siri, .tv, .select, .back, .playPause, .ringUp, .ringDown, .ringLeft, .ringRight]
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
 
-            VStack(spacing: 7) {
+            VStack(spacing: 8) {
                 voiceCard
-                connectionCard
+                statusRow
                 mappingCard
                 permissionsRow
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 14)
 
-            Spacer(minLength: 0)
-
+            Spacer(minLength: 4)
             footer
         }
-        .frame(width: 320, height: 344)
+        .frame(width: 360, height: 410)
         .background(VibePanelBackground())
-        .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 17, style: .continuous)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(theme.text(0.09), lineWidth: 1)
         }
         .environment(\.colorScheme, resolvedScheme)
@@ -215,54 +265,60 @@ struct VibeRemoteView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 9) {
+        HStack(spacing: 10) {
             ZStack {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
                                 Color(red: 0.44, green: 0.50, blue: 1.0),
-                                Color(red: 0.82, green: 0.36, blue: 0.95)
+                                Color(red: 0.80, green: 0.37, blue: 0.95)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                Image(systemName: "appletvremote.gen3")
+                Image(systemName: displayKind == .xiaomi ? "dot.radiowaves.left.and.right" : "appletvremote.gen3")
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(.white.opacity(0.94))
             }
-            .frame(width: 27, height: 27)
+            .frame(width: 30, height: 30)
 
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("VibeRemote")
-                    .font(.system(size: 13, weight: .semibold))
-                Text("Siri Remote → \(model.modeDisplay)")
-                    .font(.system(size: 8))
-                    .foregroundStyle(theme.text(0.42))
+                    .font(.system(size: 14, weight: .semibold))
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(model.selectedRemoteConnected ? Color(red: 0.36, green: 0.92, blue: 0.64) : theme.text(0.25))
+                        .frame(width: 4, height: 4)
+                    Text(model.selectedRemoteConnected ? remoteDisplayName : (model.connected ? "等待 \(displayKind.shortLabel)" : "等待遥控器"))
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(theme.text(0.48))
+                    Text("· \(model.modeDisplay)")
+                        .font(.system(size: 8))
+                        .foregroundStyle(theme.text(0.3))
+                }
             }
 
-            Spacer(minLength: 6)
+            Spacer(minLength: 4)
 
-            HStack(spacing: 5) {
-                Circle()
-                    .fill(model.connected ? Color(red: 0.36, green: 0.92, blue: 0.64) : theme.text(0.25))
-                    .frame(width: 4, height: 4)
-                Text(model.connected ? "已连接" : "等待连接")
-                    .font(.system(size: 7.5, weight: .medium))
-                    .foregroundStyle(theme.text(model.connected ? 0.55 : 0.32))
-            }
+            Text(model.selectedRemoteConnected ? "已连接" : "未连接")
+                .font(.system(size: 8, weight: .medium))
+                .foregroundStyle(theme.text(model.selectedRemoteConnected ? 0.55 : 0.34))
+                .padding(.horizontal, 8)
+                .frame(height: 22)
+                .background(
+                    Capsule()
+                        .fill(theme.text(0.055))
+                        .overlay(Capsule().strokeBorder(theme.text(0.07), lineWidth: 1))
+                )
 
             if previewMode {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(theme.text(0.5))
-                    .frame(width: 22, height: 22)
-                    .background(
-                        Circle()
-                            .fill(theme.text(0.055))
-                            .overlay(Circle().strokeBorder(theme.text(0.06), lineWidth: 1))
-                    )
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(theme.text(0.45))
+                    .frame(width: 24, height: 24)
+                    .background(Circle().fill(theme.text(0.055)))
             } else {
                 Menu {
                     Menu("模式：\(model.modeDisplay)") {
@@ -280,7 +336,7 @@ struct VibeRemoteView: View {
                         }
                     }
                     Divider()
-                    Button("按键映射…") { model.openMappingSettings() }
+                    Button("打开按键映射…") { model.openMappingSettings() }
                     Button("重新连接遥控器") { model.restartRemote() }
                     Divider()
                     Button("打开辅助功能设置") { model.openAccessibilitySettings() }
@@ -290,13 +346,13 @@ struct VibeRemoteView: View {
                     Button("退出 VibeRemote") { model.quit() }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(theme.text(0.5))
-                        .frame(width: 22, height: 22)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(theme.text(0.45))
+                        .frame(width: 24, height: 24)
                         .background(
                             Circle()
                                 .fill(theme.text(0.055))
-                                .overlay(Circle().strokeBorder(theme.text(0.06), lineWidth: 1))
+                                .overlay(Circle().strokeBorder(theme.text(0.07), lineWidth: 1))
                         )
                 }
                 .menuStyle(.borderlessButton)
@@ -304,14 +360,15 @@ struct VibeRemoteView: View {
                 .fixedSize()
             }
         }
-        .padding(.horizontal, 13)
-        .padding(.top, 11)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 14)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
     }
 
     private var voiceCard: some View {
         let listening = model.isDictating
-        return VibeCard(accent: listening ? Color(red: 1.0, green: 0.55, blue: 0.26) : Color(red: 0.44, green: 0.55, blue: 1.0)) {
+        let accent = listening ? Color(red: 1.0, green: 0.55, blue: 0.26) : Color(red: 0.44, green: 0.55, blue: 1.0)
+        return VibeCard(accent: accent) {
             HStack(spacing: 11) {
                 ZStack {
                     Circle()
@@ -324,60 +381,129 @@ struct VibeRemoteView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 40, height: 40)
-                    Image(systemName: listening ? "mic.fill" : "mic")
+                        .frame(width: 42, height: 42)
+                    Image(systemName: listening ? "waveform" : "mic.fill")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.92))
+                        .foregroundStyle(.white.opacity(0.94))
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(listening ? "正在听写…" : "按住 Siri 说话")
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(listening ? "正在听写…" : (displayKind == .xiaomi ? "按一下语音键开始" : "按一下 Siri 开始"))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(listening ? Color(red: 1.0, green: 0.74, blue: 0.45) : theme.text(0.92))
-                    Text("松开按 TV 发送 · 先点 \(model.resolvedMode.label) 输入框")
-                        .font(.system(size: 7.8))
+                    Text(listening ? "再按一次结束" : (bindings.action(for: .siri) == .dictation ? "按下开始，再按结束" : "\(sendHint) · \(model.resolvedMode.label)"))
+                        .font(.system(size: 8))
                         .foregroundStyle(theme.text(0.36))
                         .lineLimit(1)
                 }
 
                 Spacer(minLength: 2)
-                Keycap(text: "Siri", accent: theme.primary)
+
+                VStack(alignment: .trailing, spacing: 3) {
+                    Keycap(text: voiceKeyLabel, accent: theme.primary)
+                    Text("切换")
+                        .font(.system(size: 7))
+                        .foregroundStyle(theme.text(0.28))
+                }
             }
         }
     }
 
-    private var connectionCard: some View {
-        VibeCard(accent: model.connected ? Color(red: 0.36, green: 0.92, blue: 0.64) : Color(red: 0.55, green: 0.58, blue: 0.68)) {
-            HStack(spacing: 9) {
-                Image(systemName: "appletvremote.gen3")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(model.connected ? Color(red: 0.36, green: 0.92, blue: 0.64) : theme.text(0.35))
-                    .frame(width: 20)
+    private var statusRow: some View {
+        VibeCard(accent: Color(red: 0.52, green: 0.56, blue: 0.94)) {
+            HStack(spacing: 0) {
+                ZStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: displayKind == .xiaomi ? "dot.radiowaves.left.and.right" : "appletvremote.gen3")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(model.selectedRemoteConnected ? Color(red: 0.36, green: 0.92, blue: 0.64) : theme.text(0.32))
+                            .frame(width: 17)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(model.connected ? "Siri Remote 已连接" : "等待 Siri Remote")
-                        .font(.system(size: 10.5, weight: .medium))
-                        .foregroundStyle(theme.text(0.85))
-                    Text(model.connected ? "\(model.remoteName) · \(model.batteryText)" : "Back + 音量+ 按住 5 秒配对")
-                        .font(.system(size: 7.5))
-                        .foregroundStyle(theme.text(0.35))
-                        .lineLimit(1)
-                }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("遥控器")
+                                .font(.system(size: 7.2))
+                                .foregroundStyle(theme.text(0.34))
+                            Text(model.selectedRemoteConnected ? "已连接" : "等待连接")
+                                .font(.system(size: 9.5, weight: .medium))
+                                .foregroundStyle(theme.text(0.84))
+                            Text(remoteStatusDetail)
+                                .font(.system(size: 7.2))
+                                .foregroundStyle(theme.text(0.33))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 7, weight: .semibold))
+                            .foregroundStyle(theme.text(0.28))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.trailing, 8)
 
-                Spacer(minLength: 4)
-                Button("蓝牙") {
-                    model.openBluetoothSettings()
+                    Button {
+                        showRemotePicker = true
+                    } label: {
+                        Color.clear
+                            .frame(width: 150, height: 56)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $showRemotePicker, arrowEdge: .bottom) {
+                        remotePicker
+                    }
+                    .help("选择遥控器布局")
                 }
-                .buttonStyle(.plain)
-                .font(.system(size: 8, weight: .medium))
-                .foregroundStyle(theme.text(0.55))
-                .padding(.horizontal, 8)
-                .frame(height: 22)
-                .background(
-                    Capsule()
-                        .fill(theme.text(0.06))
-                        .overlay(Capsule().strokeBorder(theme.text(0.07), lineWidth: 1))
-                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.trailing, 8)
+
+                Rectangle()
+                    .fill(theme.divider)
+                    .frame(width: 1)
+                    .padding(.vertical, 2)
+
+
+                ZStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("输入目标")
+                            .font(.system(size: 7.2))
+                            .foregroundStyle(theme.text(0.34))
+
+                        HStack(spacing: 5) {
+                            modeLogo(model.resolvedMode)
+                            Text(model.resolvedMode.label)
+                                .font(.system(size: 9.5, weight: .medium))
+                                .foregroundStyle(theme.text(0.84))
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 7, weight: .semibold))
+                                .foregroundStyle(theme.text(0.28))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Text(model.selectedMode.isAutomatic ? "跟随前台应用" : "固定模式")
+                            .font(.system(size: 7.2))
+                            .foregroundStyle(theme.text(0.33))
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Button {
+                        showModePicker = true
+                    } label: {
+                        Color.clear
+                            .frame(width: 150, height: 56)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $showModePicker, arrowEdge: .bottom) {
+                        modePicker
+                    }
+                    .help("选择输入目标")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -385,39 +511,151 @@ struct VibeRemoteView: View {
     private var mappingCard: some View {
         VibeCard(accent: Color(red: 0.46, green: 0.52, blue: 0.94)) {
             VStack(alignment: .leading, spacing: 7) {
-                HStack {
-                    Text("遥控器映射")
+                HStack(spacing: 6) {
+                    Text("按键映射")
                         .font(.system(size: 8.5, weight: .medium))
                         .foregroundStyle(theme.text(0.4))
-                    Spacer()
-                    Text(model.lastAction.isEmpty ? "待命" : model.lastAction)
+                    Text(presetDisplay)
                         .font(.system(size: 7))
-                        .foregroundStyle(theme.text(0.28))
+                        .foregroundStyle(theme.text(0.3))
+                    Spacer(minLength: 0)
+                    if !model.lastAction.isEmpty {
+                        Text(model.lastAction)
+                            .font(.system(size: 7))
+                            .foregroundStyle(theme.text(0.28))
+                    }
+                    Button("编辑") { model.openMappingSettings() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundStyle(theme.text(0.55))
                 }
 
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        MappingRow(key: "Siri", action: bindings.action(for: .siri).shortLabel)
-                        MappingRow(key: "TV", action: bindings.action(for: .tv).shortLabel)
-                        MappingRow(key: "播放", action: bindings.action(for: .playPause).shortLabel)
+                HStack(spacing: 5) {
+                    ForEach(ButtonPreset.allCases) { preset in
+                        presetChip(preset)
                     }
-                    VStack(alignment: .leading, spacing: 6) {
-                        MappingRow(key: "返回", action: bindings.action(for: .back).shortLabel)
-                        MappingRow(key: "方向", action: directionLabel)
-                        MappingRow(key: "Select", action: bindings.action(for: .select).shortLabel)
+                    if bindings.activePreset == nil {
+                        Text("自定义")
+                            .font(.system(size: 7))
+                            .foregroundStyle(theme.text(0.3))
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: 3),
+                    spacing: 5
+                ) {
+                    ForEach(mappingButtons) { button in
+                        mappingCell(button)
                     }
                 }
             }
         }
     }
 
-    private var directionLabel: String {
-        let action = bindings.action(for: .ringUp)
+    private func presetChip(_ preset: ButtonPreset) -> some View {
+        let active = bindings.activePreset == preset
+        return Button {
+            bindings.apply(preset)
+        } label: {
+            Text(preset.title)
+                .font(.system(size: 7.5, weight: .medium))
+                .foregroundStyle(active ? theme.selectedText : theme.text(0.52))
+                .padding(.horizontal, 7)
+                .frame(height: 20)
+                .background(
+                    Capsule()
+                        .fill(active ? theme.selectedFill : theme.controlFill)
+                        .overlay(
+                            Capsule().strokeBorder(active ? .clear : theme.controlStroke, lineWidth: 1)
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func modeLogo(_ mode: AppMode) -> some View {
+        if let name = mode.logoName, let image = NSImage(named: name) {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .frame(width: 12, height: 12)
+                .fixedSize()
+                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                .opacity(0.95)
+        } else {
+            Image(systemName: mode.symbol)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(Color(red: 0.66, green: 0.54, blue: 1.0))
+        }
+    }
+
+    private func mappingCell(_ button: RemoteButton) -> some View {
+        let action = bindings.action(for: button)
+        let cell = HStack(spacing: 4) {
+            Keycap(text: buttonTitle(button))
+            Text(actionDisplay(action))
+                .font(.system(size: 7.5, weight: .medium))
+                .foregroundStyle(action == .none ? theme.text(0.25) : theme.text(0.58))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 5)
+        .padding(.vertical, 3)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(theme.controlFill.opacity(0.65))
+        )
+
+        return ZStack {
+            cell
+
+            Button {
+                actionEditor = button
+            } label: {
+                Color.clear
+                    .frame(width: 96, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .popover(isPresented: Binding(
+                get: { actionEditor == button },
+                set: { presented in
+                    if !presented, actionEditor == button { actionEditor = nil }
+                }
+            ), arrowEdge: .bottom) {
+                actionPicker(for: button)
+            }
+            .help("点击修改按键动作")
+        }
+    }
+
+    private func actionDisplay(_ action: ButtonAction) -> String {
         switch action {
-        case .moveUp, .moveDown, .moveLeft, .moveRight: return "鼠标"
-        case .arrowUp, .arrowDown, .arrowLeft, .arrowRight: return "方向键"
-        case .scrollUp, .scrollDown: return "滚动"
+        case .dictation: return "听写"
+        case .arrowUp: return "上键"
+        case .arrowDown: return "下键"
+        case .arrowLeft: return "左键"
+        case .arrowRight: return "右键"
         default: return action.shortLabel
+        }
+    }
+
+    private func buttonTitle(_ button: RemoteButton) -> String {
+        switch button {
+        case .siri: return displayKind == .xiaomi ? "语音" : "Siri"
+        case .playPause: return displayKind == .xiaomi ? "菜单" : "播放"
+        case .select: return "Select"
+        case .tv: return "TV"
+        case .back: return "返回"
+        case .ringUp: return "↑"
+        case .ringDown: return "↓"
+        case .ringLeft: return "←"
+        case .ringRight: return "→"
         }
     }
 
@@ -440,6 +678,85 @@ struct VibeRemoteView: View {
         }
     }
 
+    private var remotePicker: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(RemoteType.allCases) { type in
+                pickerRow(title: type.label, selected: model.remoteType == type) {
+                    model.setRemoteType(type)
+                    showRemotePicker = false
+                }
+            }
+        }
+        .padding(8)
+        .frame(width: 190)
+    }
+
+    private var modePicker: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(AppMode.allCases) { mode in
+                modePickerRow(mode)
+            }
+        }
+        .padding(8)
+        .frame(width: 170)
+    }
+
+    private func actionPicker(for button: RemoteButton) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(ButtonAction.allCases) { action in
+                    pickerRow(title: action.label, selected: bindings.action(for: button) == action) {
+                        bindings.set(action, for: button)
+                        actionEditor = nil
+                    }
+                }
+            }
+            .padding(6)
+        }
+        .frame(width: 190, height: 300)
+    }
+
+    private func modePickerRow(_ mode: AppMode) -> some View {
+        let selected = model.selectedMode == mode
+        return Button {
+            model.setMode(mode)
+            showModePicker = false
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 8, weight: .semibold))
+                    .opacity(selected ? 1 : 0)
+                    .frame(width: 10)
+                modeLogo(mode)
+                Text(mode.label)
+                    .font(.system(size: 10))
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 7)
+            .frame(height: 24)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func pickerRow(title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 8, weight: .semibold))
+                    .opacity(selected ? 1 : 0)
+                    .frame(width: 10)
+                Text(title)
+                    .font(.system(size: 10))
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 7)
+            .frame(height: 24)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     private var footer: some View {
         HStack(spacing: 6) {
             Circle()
@@ -449,19 +766,14 @@ struct VibeRemoteView: View {
                 .font(.system(size: 7.5))
                 .foregroundStyle(theme.text(0.32))
                 .lineLimit(1)
-            Spacer()
-            if !model.lastRaw.isEmpty {
-                Text(model.lastRaw)
-                    .font(.system(size: 7, design: .monospaced))
-                    .foregroundStyle(theme.text(0.2))
-            }
-            Text("VibeRemote 1.7")
+            Spacer(minLength: 4)
+            Text("v1.7")
                 .font(.system(size: 7))
-                .foregroundStyle(theme.text(0.2))
+                .foregroundStyle(theme.text(0.22))
         }
-        .padding(.horizontal, 13)
+        .padding(.horizontal, 14)
         .padding(.top, 7)
-        .padding(.bottom, 9)
+        .padding(.bottom, 10)
     }
 }
 

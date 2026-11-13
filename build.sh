@@ -34,7 +34,15 @@ cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
 if [[ -f "$ROOT/Resources/AppIcon.icns" ]]; then
   cp "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 fi
-find "$APP" -exec xattr -c {} \; 2>/dev/null || true
+if [[ -f "$ROOT/Resources/RC003MS.png" ]]; then
+  cp "$ROOT/Resources/RC003MS.png" "$APP/Contents/Resources/RC003MS.png"
+fi
+for asset in BrandDeepSeek.png BrandWorkBuddy.png BrandDoubao.png; do
+  if [[ -f "$ROOT/Resources/$asset" ]]; then
+    cp "$ROOT/Resources/$asset" "$APP/Contents/Resources/$asset"
+  fi
+done
+xattr -cr "$APP" 2>/dev/null || true
 dot_clean -m "$APP" 2>/dev/null || true
 codesign --force --deep --sign - "$APP" >/dev/null
 echo "Built $APP"

@@ -38,34 +38,38 @@ enum RemoteKind: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .apple: return "Siri Remote A2854"
+        case .apple: return "Siri Remote"
         case .xiaomi: return "小米蓝牙遥控器 2 Pro"
         }
     }
 
     var shortLabel: String {
         switch self {
-        case .apple: return "A2854"
-        case .xiaomi: return "RC003"
+        case .apple: return "Siri"
+        case .xiaomi: return "RC003-MS"
         }
     }
 }
 
 private enum RemoteProfile: Equatable {
+    case appleA2540
+    case appleA2854
     case appleSiriRemote
     case xiaomiRC003
 
     var kind: RemoteKind {
         switch self {
-        case .appleSiriRemote: return .apple
+        case .appleA2540, .appleA2854, .appleSiriRemote: return .apple
         case .xiaomiRC003: return .xiaomi
         }
     }
 
     var displayName: String {
         switch self {
-        case .appleSiriRemote: return "Siri Remote (A2854)"
-        case .xiaomiRC003: return "小米蓝牙遥控器 2 Pro (RC003)"
+        case .appleA2540: return "Siri Remote (A2540)"
+        case .appleA2854: return "Siri Remote (A2854)"
+        case .appleSiriRemote: return "Siri Remote"
+        case .xiaomiRC003: return "小米蓝牙遥控器 2 Pro (RC003-MS)"
         }
     }
 }
@@ -86,6 +90,8 @@ final class RemoteManager {
     private var isRunning = false
     private(set) var transport: String?
     private(set) var connectedKind: RemoteKind?
+    private(set) var connectedKinds: Set<RemoteKind> = []
+    private(set) var connectedNames: [RemoteKind: String] = [:]
     var isListening: Bool { isRunning }
 
     private let appleVendorID = 0x004C
@@ -103,20 +109,27 @@ final class RemoteManager {
         let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
         self.manager = manager
 
-        let bluetoothMatch: [String: Any] = [kIOHIDVendorIDKey: appleVendorID]
-        let usbMatch: [String: Any] = [
-            kIOHIDVendorIDKey: 0x05AC,
+        // Use explicit product matches instead of a vendor-only dictionary.
+        // A broad vendor match can make IOHIDManagerOpen fail with
+        // kIOReturnUnsupported on recent macOS releases.
+        let a2540Match: [String: Any] = [
+            kIOHIDVendorIDKey: appleVendorID,
             kIOHIDProductIDKey: 0x0314
+        ]
+        let a2854Match: [String: Any] = [
+            kIOHIDVendorIDKey: appleVendorID,
+            kIOHIDProductIDKey: 0x0315
         ]
         let xiaomiMatch: [String: Any] = [
             kIOHIDVendorIDKey: xiaomiVendorID,
             kIOHIDProductIDKey: xiaomiProductID
         ]
-        let matching = [bluetoothMatch, usbMatch, xiaomiMatch]
+        let matching = [a2540Match, a2854Match, xiaomiMatch]
         IOHIDManagerSetDeviceMatchingMultiple(manager, matching as CFArray)
         IOHIDManagerRegisterDeviceMatchingCallback(manager, deviceAddedCallback, Unmanaged.passUnretained(self).toOpaque())
         IOHIDManagerRegisterDeviceRemovalCallback(manager, deviceRemovedCallback, Unmanaged.passUnretained(self).toOpaque())
         IOHIDManagerRegisterInputReportCallback(manager, inputReportCallback, Unmanaged.passUnretained(self).toOpaque())
+        IOHIDManagerRegisterInputValueCallback(manager, inputValueCallback, Unmanaged.passUnretained(self).toOpaque())
 
         let result = IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
         guard result == kIOReturnSuccess else {
@@ -146,6 +159,8 @@ final class RemoteManager {
         states.removeAll()
         xiaomiPressed.removeAll()
         xiaomiDeviceCount = 0
+        connectedKinds.removeAll()
+        connectedNames.removeAll()
 
         if let manager {
             IOHIDManagerUnscheduleFromRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
@@ -172,12 +187,14 @@ final class RemoteManager {
         guard let vendor = numberProperty(device, kIOHIDVendorIDKey) else { return nil }
         let productID = numberProperty(device, kIOHIDProductIDKey)
 
-        // A2854 also exposes a wired USB HID interface while charging.
+        // A2540 also exposes a wired Lightning/USB HID interface while charging.
         if vendor == 0x05AC, productID == 0x0314 {
-            return .appleSiriRemote
+            return .appleA2540
         }
 
         if vendor == appleVendorID {
+            if let productID, productID == 0x0314 { return .appleA2540 }
+            if let productID, productID == 0x0315 { return .appleA2854 }
             if let productID, knownProductIDs.contains(productID) {
                 return .appleSiriRemote
             }
@@ -190,7 +207,7 @@ final class RemoteManager {
         if vendor == xiaomiVendorID {
             if productID == xiaomiProductID { return .xiaomiRC003 }
             if let name = stringProperty(device, kIOHIDProductKey)?.lowercased(),
-               name.contains("mi rc") || name.contains("xiaomi") || name.contains("remote") || name.contains("小米") || name.contains("遥控") {
+               name.contains("mi rc") || name.contains("xiaomi") || name.contains("remote") || name.contains("小米") || name.contains("遥控") || name.contains("rc003") {
                 return .xiaomiRC003
             }
         }
@@ -223,13 +240,12 @@ final class RemoteManager {
         devices.append(device)
         transport = IOHIDDeviceGetProperty(device, kIOHIDTransportKey as CFString) as? String
         connectedKind = remoteProfile.kind
-
-        if !didReportConnection {
-            didReportConnection = true
-            let displayName = remoteProfile.displayName
-            onConnection?(true, displayName)
-            onStatus?("已连接 \(displayName)")
-        }
+        connectedKinds.insert(remoteProfile.kind)
+        let displayName = remoteProfile.displayName
+        connectedNames[remoteProfile.kind] = displayName
+        didReportConnection = true
+        onConnection?(true, displayName)
+        onStatus?(connectedKinds.count > 1 ? "已连接 \(connectedKinds.count) 个遥控器" : "已连接 \(displayName)")
     }
 
     fileprivate func close(_ device: IOHIDDevice) {
@@ -245,6 +261,11 @@ final class RemoteManager {
         }
         devices.remove(at: index)
 
+        let remainingKinds = Set(devices.compactMap { profile(for: $0)?.kind })
+        connectedKinds = remainingKinds
+        connectedNames = connectedNames.filter { remainingKinds.contains($0.key) }
+        connectedKind = devices.last.flatMap { profile(for: $0)?.kind }
+
         if devices.isEmpty {
             didReportConnection = false
             transport = nil
@@ -253,6 +274,9 @@ final class RemoteManager {
             xiaomiPressed.removeAll()
             onConnection?(false, nil)
             onStatus?("遥控器已断开")
+        } else {
+            onConnection?(true, connectedNames[connectedKind ?? .apple])
+            onStatus?(connectedKinds.count > 1 ? "已连接 \(connectedKinds.count) 个遥控器" : "已连接")
         }
     }
 

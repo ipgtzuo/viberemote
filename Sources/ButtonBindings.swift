@@ -19,6 +19,8 @@ enum ButtonAction: String, CaseIterable, Identifiable {
     case arrowDown
     case arrowLeft
     case arrowRight
+    case confirm
+    case deleteBackward
     case none
 
     var id: String { rawValue }
@@ -42,6 +44,8 @@ enum ButtonAction: String, CaseIterable, Identifiable {
         case .arrowDown: return "方向键 ↓"
         case .arrowLeft: return "方向键 ←"
         case .arrowRight: return "方向键 →"
+        case .confirm: return "确认 / Return"
+        case .deleteBackward: return "删除 / Backspace"
         case .none: return "不操作"
         }
     }
@@ -65,6 +69,8 @@ enum ButtonAction: String, CaseIterable, Identifiable {
         case .arrowDown: return "↓"
         case .arrowLeft: return "←"
         case .arrowRight: return "→"
+        case .confirm: return "确认"
+        case .deleteBackward: return "删除"
         case .none: return "无"
         }
     }

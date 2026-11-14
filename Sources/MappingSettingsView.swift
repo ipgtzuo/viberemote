@@ -66,9 +66,9 @@ private func actionColor(_ action: ButtonAction, isDark: Bool) -> Color {
     switch action {
     case .dictation:
         return isDark ? Color(red: 1.0, green: 0.66, blue: 0.28) : Color(red: 0.82, green: 0.43, blue: 0.08)
-    case .send, .sendCommandReturn:
+    case .send, .sendCommandReturn, .confirm:
         return isDark ? Color(red: 0.35, green: 0.90, blue: 0.64) : Color(red: 0.08, green: 0.55, blue: 0.33)
-    case .stop:
+    case .stop, .deleteBackward:
         return isDark ? Color(red: 1.0, green: 0.40, blue: 0.38) : Color(red: 0.80, green: 0.16, blue: 0.18)
     case .leftClick, .rightClick:
         return isDark ? Color(red: 0.42, green: 0.60, blue: 1.0) : Color(red: 0.16, green: 0.34, blue: 0.80)

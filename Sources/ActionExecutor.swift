@@ -14,6 +14,10 @@ final class ActionExecutor {
     private var selfTestDictating = false
     private var selectDown = false
     private var scrollMode = false
+    private var heldDirections: Set<RemoteButton> = []
+    private var pointerTimer: Timer?
+    private var pointerStart: TimeInterval = 0
+    private var pointerLastAction: String?
 
     init(bindings: ButtonBindingStore) {
         self.bindings = bindings
@@ -98,14 +102,12 @@ final class ActionExecutor {
                 onAction?("右键", "cursorarrow.click.2")
             }
 
-        case .moveUp:
-            if pressed { moveOrScroll(dx: 0, dy: -16, scroll: 34) }
-        case .moveDown:
-            if pressed { moveOrScroll(dx: 0, dy: 16, scroll: -34) }
-        case .moveLeft:
-            if pressed { moveOrScroll(dx: -16, dy: 0, scroll: 0) }
-        case .moveRight:
-            if pressed { moveOrScroll(dx: 16, dy: 0, scroll: 0) }
+        case .moveUp, .moveDown, .moveLeft, .moveRight:
+            if pressed {
+                beginPointer(button)
+            } else {
+                endPointer(button)
+            }
 
         case .scrollUp:
             if pressed { scroll(dy: 34, dx: 0) }
@@ -126,6 +128,18 @@ final class ActionExecutor {
             if pressed { sendArrow(kVK_LeftArrow) }
         case .arrowRight:
             if pressed { sendArrow(kVK_RightArrow) }
+
+        case .confirm:
+            if pressed {
+                sendReturn()
+                onAction?("确认", "return")
+            }
+
+        case .deleteBackward:
+            if pressed {
+                sendDelete()
+                onAction?("删除", "delete.left")
+            }
 
         case .none:
             break
@@ -215,6 +229,8 @@ final class ActionExecutor {
 
     func releaseAll() {
         endDictation()
+        heldDirections.removeAll()
+        stopPointerTimer()
         if selectDown {
             selectDown = false
             postMouse(.leftMouseUp)
@@ -249,23 +265,92 @@ final class ActionExecutor {
         postKey(CGKeyCode(kVK_Escape), down: false, flags: [])
     }
 
+    func sendDelete() {
+        postKey(CGKeyCode(kVK_Delete), down: true, flags: [])
+        postKey(CGKeyCode(kVK_Delete), down: false, flags: [])
+    }
+
     func sendArrow(_ key: Int) {
         postKey(CGKeyCode(key), down: true, flags: [])
         postKey(CGKeyCode(key), down: false, flags: [])
     }
 
-    private func moveOrScroll(dx: CGFloat, dy: CGFloat, scroll amount: Int32) {
+    private func beginPointer(_ button: RemoteButton) {
+        guard heldDirections.insert(button).inserted else { return }
+
+        if pointerTimer == nil {
+            pointerStart = Date.timeIntervalSinceReferenceDate
+            pointerLastAction = nil
+            // A tap should still nudge the pointer a little; holding accelerates
+            // from a slow, precise speed to a faster glide.
+            applyPointer(dx: vector(for: button).dx * 5, dy: vector(for: button).dy * 5)
+            let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+                Task { @MainActor [weak self] in self?.pointerTick() }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            pointerTimer = timer
+        }
+    }
+
+    private func endPointer(_ button: RemoteButton) {
+        heldDirections.remove(button)
+        if heldDirections.isEmpty {
+            stopPointerTimer()
+        }
+    }
+
+    private func pointerTick() {
+        guard pointerTimer != nil, !heldDirections.isEmpty else {
+            stopPointerTimer()
+            return
+        }
+        let elapsed = Date.timeIntervalSinceReferenceDate - pointerStart
+        let speed = min(9.0, 2.0 + CGFloat(elapsed) * 14.0)
+        var dx: CGFloat = 0
+        var dy: CGFloat = 0
+        if heldDirections.contains(.ringLeft) { dx -= 1 }
+        if heldDirections.contains(.ringRight) { dx += 1 }
+        if heldDirections.contains(.ringUp) { dy -= 1 }
+        if heldDirections.contains(.ringDown) { dy += 1 }
+        guard dx != 0 || dy != 0 else { return }
+        let length = sqrt(dx * dx + dy * dy)
+        dx = dx / length * speed
+        dy = dy / length * speed
+        applyPointer(dx: dx, dy: dy)
+    }
+
+    private func applyPointer(dx: CGFloat, dy: CGFloat) {
         if scrollMode {
-            if dx != 0 {
-                scroll(dy: 0, dx: dx > 0 ? 28 : -28)
-            } else {
-                scroll(dy: amount, dx: 0)
+            let wheelX = Int32(dx * 5)
+            let wheelY = Int32(dy * 5)
+            guard wheelX != 0 || wheelY != 0 else { return }
+            scroll(dy: wheelY, dx: wheelX)
+            if pointerLastAction != "滚动" {
+                pointerLastAction = "滚动"
+                onAction?("滚动", "scroll")
             }
         } else {
-            let current = cursorPoint
-            let destination = CGPoint(x: current.x + dx, y: current.y + dy)
-            let type: CGEventType = selectDown ? .leftMouseDragged : .mouseMoved
-            postMouse(type, at: destination)
+            movePointer(dx: dx, dy: dy)
+            if pointerLastAction != "鼠标移动" {
+                pointerLastAction = "鼠标移动"
+                onAction?("鼠标移动", "cursorarrow")
+            }
+        }
+    }
+
+    private func stopPointerTimer() {
+        pointerTimer?.invalidate()
+        pointerTimer = nil
+        pointerLastAction = nil
+    }
+
+    private func vector(for button: RemoteButton) -> (dx: CGFloat, dy: CGFloat) {
+        switch button {
+        case .ringUp: return (0, -1)
+        case .ringDown: return (0, 1)
+        case .ringLeft: return (-1, 0)
+        case .ringRight: return (1, 0)
+        default: return (0, 0)
         }
     }
 

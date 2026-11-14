@@ -18,6 +18,8 @@ final class ActionExecutor {
     private var pointerTimer: Timer?
     private var lastPressAt: [RemoteButton: TimeInterval] = [:]
     private var buttonsDown: Set<RemoteButton> = []
+    private var pendingPressTimer: Timer?
+    private var pendingPress: (button: RemoteButton, action: ButtonAction)?
     private var pointerStart: TimeInterval = 0
     private var pointerLastAction: String?
 
@@ -57,7 +59,8 @@ final class ActionExecutor {
             // Check the double window before the repeat-press guard: some BLE
             // remotes drop the release report, and the second press must still
             // be able to turn into a double action.
-            if doubleAction != .none, now - lastPressAt[button, default: 0] < 0.55 {
+            if doubleAction != .none, now - lastPressAt[button, default: 0] < 0.50 {
+                cancelPendingPress()
                 lastPressAt[button] = 0
                 buttonsDown.insert(button)
                 execute(doubleAction, button: button, pressed: true)
@@ -68,11 +71,52 @@ final class ActionExecutor {
             buttonsDown.insert(button)
             if doubleAction != .none {
                 lastPressAt[button] = now
+                let singleAction = bindings.action(for: button)
+                if defersSingleAction(singleAction) {
+                    schedulePendingPress(button: button, action: singleAction)
+                    return
+                }
+                execute(singleAction, button: button, pressed: true)
+                return
             }
         } else {
             buttonsDown.remove(button)
+            if pendingPress?.button == button {
+                // A deferred single action owns this press; the timer will run it.
+                return
+            }
         }
         execute(bindings.action(for: button), button: button, pressed: pressed)
+    }
+
+    private func defersSingleAction(_ action: ButtonAction) -> Bool {
+        switch action {
+        case .send, .sendCommandReturn, .stop, .confirm, .deleteBackward,
+             .pageUp, .pageDown, .browserBack, .showAllWindows,
+             .middleClick, .rightClick:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func schedulePendingPress(button: RemoteButton, action: ButtonAction) {
+        cancelPendingPress()
+        pendingPress = (button, action)
+        pendingPressTimer = Timer.scheduledTimer(withTimeInterval: 0.50, repeats: false) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, let pending = self.pendingPress, pending.button == button else { return }
+                self.pendingPress = nil
+                self.pendingPressTimer = nil
+                self.execute(pending.action, button: button, pressed: true)
+            }
+        }
+    }
+
+    private func cancelPendingPress() {
+        pendingPressTimer?.invalidate()
+        pendingPressTimer = nil
+        pendingPress = nil
     }
 
     private func execute(_ action: ButtonAction, button: RemoteButton, pressed: Bool) {
@@ -286,6 +330,7 @@ final class ActionExecutor {
     func releaseAll() {
         endDictation()
         heldDirections.removeAll()
+        cancelPendingPress()
         let now = ProcessInfo.processInfo.systemUptime
         lastPressAt = lastPressAt.filter { now - $0.value < 1.0 }
         buttonsDown.removeAll()

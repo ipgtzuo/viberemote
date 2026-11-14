@@ -106,7 +106,7 @@ enum ButtonPreset: String, CaseIterable, Identifiable {
 
     var detail: String {
         switch self {
-        case .mouse: return "方向环移动光标 · Select 左键 / 双击所有窗口 · 返回右键 · TV 中键 · 播放滚动"
+        case .mouse: return "方向环移动 · Select 左键/双击窗口 · 返回右键 · TV 中键"
         case .dshKeyboard: return "方向环方向键 · Select/TV 发送 · 返回停止"
         }
     }

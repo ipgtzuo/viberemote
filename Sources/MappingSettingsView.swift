@@ -2,19 +2,6 @@ import SwiftUI
 import AppKit
 import Foundation
 
-private enum MappingMode: String, CaseIterable, Identifiable {
-    case manual
-    case physical
-
-    var id: String { rawValue }
-    var label: String {
-        switch self {
-        case .manual: return "手动列表"
-        case .physical: return "实体遥控器"
-        }
-    }
-}
-
 private enum MappingSide {
     case left
     case right
@@ -438,7 +425,6 @@ struct XiaomiRemoteDiagram: View {
 struct MappingSettingsView: View {
     @ObservedObject var model: VibeRemoteModel
     @ObservedObject var bindings: ButtonBindingStore
-    @State private var mode: MappingMode = .manual
     @State private var selected: RemoteButton = .siri
     @State private var pressedButton: RemoteButton?
     @Environment(\.colorScheme) private var systemScheme
@@ -551,37 +537,6 @@ struct MappingSettingsView: View {
     private var toolbar: some View {
         HStack(alignment: .center, spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("编辑方式")
-                    .font(.system(size: 8, weight: .medium))
-                    .foregroundStyle(theme.label(0.35))
-                HStack(spacing: 2) {
-                    ForEach(MappingMode.allCases) { item in
-                        Button {
-                            mode = item
-                        } label: {
-                            Text(item.label)
-                                .font(.system(size: 9.5, weight: .medium))
-                                .foregroundStyle(mode == item ? theme.selectedText : theme.text(0.52))
-                                .frame(maxWidth: .infinity, minHeight: 24)
-                                .background(
-                                    Capsule().fill(mode == item ? theme.selectedFill : Color.clear)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(2)
-                .frame(width: 180)
-                .background(
-                    Capsule()
-                        .fill(theme.text(0.055))
-                        .overlay(Capsule().strokeBorder(theme.text(0.07), lineWidth: 1))
-                )
-            }
-
-            Divider().frame(height: 30).opacity(0.6)
-
-            VStack(alignment: .leading, spacing: 3) {
                 Text("遥控器")
                     .font(.system(size: 8, weight: .medium))
                     .foregroundStyle(theme.label(0.35))
@@ -596,6 +551,10 @@ struct MappingSettingsView: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .frame(width: 200)
+
+                Text("点卡片或按遥控器编辑")
+                    .font(.system(size: 8))
+                    .foregroundStyle(theme.label(0.28))
             }
 
             Spacer()
@@ -727,24 +686,17 @@ struct MappingSettingsView: View {
 
             Spacer(minLength: 4)
 
-            if mode == .manual {
-                Picker("", selection: Binding(
-                    get: { action },
-                    set: { bindings.set($0, for: entry.button) }
-                )) {
-                    ForEach(ButtonAction.allCases) { item in
-                        Text(item.label).tag(item)
-                    }
+            Picker("", selection: Binding(
+                get: { action },
+                set: { bindings.set($0, for: entry.button) }
+            )) {
+                ForEach(ButtonAction.allCases) { item in
+                    Text(item.label).tag(item)
                 }
-                .labelsHidden()
-                .controlSize(.small)
-                .frame(width: 148)
-            } else {
-                Text(action.label)
-                    .font(.system(size: 9))
-                    .foregroundStyle(theme.label(0.56))
-                    .lineLimit(1)
             }
+            .labelsHidden()
+            .controlSize(.small)
+            .frame(width: 148)
         }
         .padding(.horizontal, 10)
         .background(
@@ -768,7 +720,7 @@ struct MappingSettingsView: View {
                 Text("已选：\(selected.label)")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(theme.label(0.78))
-                Text(mode == .physical ? "点击左侧按键，或直接按下遥控器实体键" : "下拉框直接修改；也可以点击左侧按键定位")
+                Text("点按键卡片或直接按遥控器选中，再修改动作")
                     .font(.system(size: 8))
                     .foregroundStyle(theme.label(0.32))
             }

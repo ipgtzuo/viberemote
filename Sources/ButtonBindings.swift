@@ -8,6 +8,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
     case stop
     case leftClick
     case rightClick
+    case middleClick
     case moveUp
     case moveDown
     case moveLeft
@@ -35,6 +36,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
         case .stop: return "停止 / Escape"
         case .leftClick: return "鼠标左键"
         case .rightClick: return "鼠标右键"
+        case .middleClick: return "鼠标中键"
         case .moveUp: return "光标上移"
         case .moveDown: return "光标下移"
         case .moveLeft: return "光标左移"
@@ -62,6 +64,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
         case .stop: return "停止"
         case .leftClick: return "左键"
         case .rightClick: return "右键"
+        case .middleClick: return "中键"
         case .moveUp: return "上移"
         case .moveDown: return "下移"
         case .moveLeft: return "左移"
@@ -97,7 +100,7 @@ enum ButtonPreset: String, CaseIterable, Identifiable {
 
     var detail: String {
         switch self {
-        case .mouse: return "方向环移动光标 · Select 左键 · 播放切换滚动"
+        case .mouse: return "方向环移动光标 · Select 左键 · 返回右键 · TV 中键 · 播放滚动"
         case .dshKeyboard: return "方向环方向键 · Select/TV 发送 · 返回停止"
         }
     }
@@ -198,9 +201,9 @@ final class ButtonBindingStore: ObservableObject {
         case .mouse:
             return [
                 .siri: .dictation,
-                .tv: .send,
+                .tv: .middleClick,
                 .playPause: .toggleScroll,
-                .back: .stop,
+                .back: .rightClick,
                 .select: .leftClick,
                 .ringUp: .moveUp,
                 .ringDown: .moveDown,

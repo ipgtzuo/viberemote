@@ -102,6 +102,13 @@ final class ActionExecutor {
                 onAction?("右键", "cursorarrow.click.2")
             }
 
+        case .middleClick:
+            if pressed {
+                postMouse(.otherMouseDown, button: .center)
+                postMouse(.otherMouseUp, button: .center)
+                onAction?("中键", "cursorarrow.click")
+            }
+
         case .moveUp, .moveDown, .moveLeft, .moveRight:
             if pressed {
                 beginPointer(button)
@@ -392,13 +399,14 @@ final class ActionExecutor {
         CGEvent(source: nil)?.location ?? NSEvent.mouseLocation
     }
 
-    private func postMouse(_ type: CGEventType, at point: CGPoint? = nil) {
+    private func postMouse(_ type: CGEventType, at point: CGPoint? = nil, button: CGMouseButton? = nil) {
         let location = point ?? cursorPoint
+        let mouseButton = button ?? (type == .rightMouseDown || type == .rightMouseUp ? .right : .left)
         guard let event = CGEvent(
             mouseEventSource: nil,
             mouseType: type,
             mouseCursorPosition: location,
-            mouseButton: type == .rightMouseDown || type == .rightMouseUp ? .right : .left
+            mouseButton: mouseButton
         ) else { return }
         event.post(tap: .cghidEventTap)
     }

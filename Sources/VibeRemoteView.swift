@@ -418,17 +418,17 @@ struct VibeRemoteView: View {
                     HStack(spacing: 8) {
                         RemoteGlyph(kind: displayKind)
                             .foregroundStyle(model.selectedRemoteConnected ? Color(red: 0.36, green: 0.92, blue: 0.64) : theme.text(0.32))
-                            .frame(width: 17, height: 19)
+                            .frame(width: 16, height: 18)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("遥控器")
-                                .font(.system(size: 7.2))
+                                .font(.system(size: 7.0))
                                 .foregroundStyle(theme.label(0.34))
                             Text(model.selectedRemoteConnected ? "已连接" : "等待连接")
-                                .font(.system(size: 9.5, weight: .medium))
+                                .font(.system(size: 10, weight: .semibold))
                                 .foregroundStyle(theme.label(0.84))
                             Text(remoteStatusDetail)
-                                .font(.system(size: 7.2))
+                                .font(.system(size: 7.0))
                                 .foregroundStyle(theme.label(0.33))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
@@ -445,7 +445,7 @@ struct VibeRemoteView: View {
                         showRemotePicker = true
                     } label: {
                         Color.clear
-                            .frame(width: 150, height: 56)
+                            .frame(width: 150, height: 44)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -455,7 +455,7 @@ struct VibeRemoteView: View {
                     .help("选择遥控器布局")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.trailing, 8)
+                .padding(.trailing, 6)
 
                 Rectangle()
                     .fill(theme.divider)
@@ -466,24 +466,24 @@ struct VibeRemoteView: View {
                 ZStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("输入目标")
-                            .font(.system(size: 7.2))
+                            .font(.system(size: 7.0))
                             .foregroundStyle(theme.label(0.34))
 
                         HStack(spacing: 5) {
                             modeLogo(model.resolvedMode)
                             Text(model.resolvedMode.label)
-                                .font(.system(size: 9.5, weight: .medium))
+                                .font(.system(size: 10, weight: .semibold))
                                 .foregroundStyle(theme.label(0.84))
                                 .lineLimit(1)
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 7, weight: .semibold))
+                                .font(.system(size: 6.5, weight: .semibold))
                                 .foregroundStyle(theme.label(0.28))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                         Text(model.selectedMode.isAutomatic ? "跟随前台应用" : "固定模式")
-                            .font(.system(size: 7.2))
+                            .font(.system(size: 7.0))
                             .foregroundStyle(theme.label(0.33))
                             .lineLimit(1)
                     }
@@ -493,7 +493,7 @@ struct VibeRemoteView: View {
                         showModePicker = true
                     } label: {
                         Color.clear
-                            .frame(width: 150, height: 56)
+                            .frame(width: 150, height: 44)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -503,7 +503,7 @@ struct VibeRemoteView: View {
                     .help("选择输入目标")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 8)
+                .padding(.leading, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
@@ -768,7 +768,7 @@ struct VibeRemoteView: View {
                 .foregroundStyle(theme.label(0.32))
                 .lineLimit(1)
             Spacer(minLength: 4)
-            Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8.2")")
+            Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8.3")")
                 .font(.system(size: 7))
                 .foregroundStyle(theme.label(0.22))
         }

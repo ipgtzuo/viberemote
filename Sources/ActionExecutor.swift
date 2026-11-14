@@ -52,17 +52,21 @@ final class ActionExecutor {
 
     func handle(_ button: RemoteButton, pressed: Bool) {
         if pressed {
+            let doubleAction = bindings.doubleAction(for: button)
+            let now = ProcessInfo.processInfo.systemUptime
+            // Check the double window before the repeat-press guard: some BLE
+            // remotes drop the release report, and the second press must still
+            // be able to turn into a double action.
+            if doubleAction != .none, now - lastPressAt[button, default: 0] < 0.55 {
+                lastPressAt[button] = 0
+                buttonsDown.insert(button)
+                execute(doubleAction, button: button, pressed: true)
+                onAction?("双击 · \(doubleAction.shortLabel)", "cursorarrow.click.2")
+                return
+            }
             guard !buttonsDown.contains(button) else { return }
             buttonsDown.insert(button)
-            let doubleAction = bindings.doubleAction(for: button)
             if doubleAction != .none {
-                let now = ProcessInfo.processInfo.systemUptime
-                if now - lastPressAt[button, default: 0] < 0.35 {
-                    lastPressAt[button] = 0
-                    execute(doubleAction, button: button, pressed: true)
-                    onAction?("双击 · \(doubleAction.shortLabel)", "cursorarrow.click.2")
-                    return
-                }
                 lastPressAt[button] = now
             }
         } else {
@@ -282,7 +286,8 @@ final class ActionExecutor {
     func releaseAll() {
         endDictation()
         heldDirections.removeAll()
-        lastPressAt.removeAll()
+        let now = ProcessInfo.processInfo.systemUptime
+        lastPressAt = lastPressAt.filter { now - $0.value < 1.0 }
         buttonsDown.removeAll()
         stopPointerTimer()
         if selectDown {

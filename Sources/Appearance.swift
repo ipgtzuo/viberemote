@@ -48,24 +48,31 @@ struct VibeTheme {
         primary.opacity(alpha)
     }
 
+    /// Foreground text gets extra contrast in light appearance; keep fills
+    /// and strokes on `text(_:)` so cards do not become muddy.
+    func label(_ alpha: Double) -> Color {
+        if isDark { return primary.opacity(alpha) }
+        return primary.opacity(min(1.0, alpha * 1.50 + 0.12))
+    }
+
     var cardFill: Color {
-        isDark ? Color.white.opacity(0.052) : Color.black.opacity(0.035)
+        isDark ? Color.white.opacity(0.052) : Color.black.opacity(0.045)
     }
 
     var cardFillStrong: Color {
-        isDark ? Color.white.opacity(0.085) : Color.black.opacity(0.06)
+        isDark ? Color.white.opacity(0.085) : Color.black.opacity(0.075)
     }
 
     var cardStroke: Color {
-        isDark ? Color.white.opacity(0.075) : Color.black.opacity(0.085)
+        isDark ? Color.white.opacity(0.075) : Color.black.opacity(0.11)
     }
 
     var controlFill: Color {
-        isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.055)
+        isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.07)
     }
 
     var controlStroke: Color {
-        isDark ? Color.white.opacity(0.08) : Color.black.opacity(0.09)
+        isDark ? Color.white.opacity(0.08) : Color.black.opacity(0.12)
     }
 
     var keyFill: Color {
@@ -93,11 +100,11 @@ struct VibeTheme {
     }
 
     var panelTop: Color {
-        isDark ? Color(red: 0.08, green: 0.09, blue: 0.13) : Color(red: 0.975, green: 0.975, blue: 0.99)
+        isDark ? Color(red: 0.08, green: 0.09, blue: 0.13) : Color(red: 0.965, green: 0.965, blue: 0.985)
     }
 
     var panelBottom: Color {
-        isDark ? Color(red: 0.035, green: 0.04, blue: 0.06) : Color(red: 0.90, green: 0.915, blue: 0.955)
+        isDark ? Color(red: 0.035, green: 0.04, blue: 0.06) : Color(red: 0.885, green: 0.90, blue: 0.945)
     }
 
     var glowBlue: Color {

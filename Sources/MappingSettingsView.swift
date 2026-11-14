@@ -492,7 +492,7 @@ struct MappingSettingsView: View {
                     .font(.system(size: 20, weight: .semibold))
                 Text("正在编辑：\(model.modeDisplay) · 当前布局：\(remoteLayoutName)")
                     .font(.system(size: 10))
-                    .foregroundStyle(theme.text(0.42))
+                    .foregroundStyle(theme.label(0.42))
             }
 
             Spacer()
@@ -513,10 +513,10 @@ struct MappingSettingsView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(model.selectedRemoteConnected ? "已连接" : "未连接")
                     .font(.system(size: 9.5, weight: .semibold))
-                    .foregroundStyle(theme.text(model.selectedRemoteConnected ? 0.82 : 0.48))
+                    .foregroundStyle(theme.label(model.selectedRemoteConnected ? 0.82 : 0.48))
                 Text(connectionDetail)
                     .font(.system(size: 8))
-                    .foregroundStyle(theme.text(0.40))
+                    .foregroundStyle(theme.label(0.40))
                     .lineLimit(1)
             }
         }
@@ -547,7 +547,7 @@ struct MappingSettingsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("编辑方式")
                     .font(.system(size: 8, weight: .medium))
-                    .foregroundStyle(theme.text(0.35))
+                    .foregroundStyle(theme.label(0.35))
                 HStack(spacing: 2) {
                     ForEach(MappingMode.allCases) { item in
                         Button {
@@ -578,7 +578,7 @@ struct MappingSettingsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("遥控器")
                     .font(.system(size: 8, weight: .medium))
-                    .foregroundStyle(theme.text(0.35))
+                    .foregroundStyle(theme.label(0.35))
                 Picker("", selection: Binding(
                     get: { model.remoteType },
                     set: { model.setRemoteType($0) }
@@ -597,7 +597,7 @@ struct MappingSettingsView: View {
             VStack(alignment: .trailing, spacing: 4) {
                 Text("映射方案")
                     .font(.system(size: 8, weight: .medium))
-                    .foregroundStyle(theme.text(0.35))
+                    .foregroundStyle(theme.label(0.35))
 
                 HStack(spacing: 2) {
                     ForEach(ButtonPreset.allCases) { preset in
@@ -626,13 +626,13 @@ struct MappingSettingsView: View {
                 HStack(spacing: 8) {
                     Text(bindings.activePreset?.detail ?? "自定义：已单独调整按键")
                         .font(.system(size: 7.5))
-                        .foregroundStyle(theme.text(0.38))
+                        .foregroundStyle(theme.label(0.38))
                         .lineLimit(1)
                     Spacer(minLength: 4)
                     Button("恢复默认") { bindings.reset() }
                         .buttonStyle(.plain)
                         .font(.system(size: 8))
-                        .foregroundStyle(theme.text(0.38))
+                        .foregroundStyle(theme.label(0.38))
                 }
                 .frame(width: 280, alignment: .trailing)
             }
@@ -711,11 +711,11 @@ struct MappingSettingsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(entry.title)
                     .font(.system(size: 9.5, weight: .medium))
-                    .foregroundStyle(theme.text(0.84))
+                    .foregroundStyle(theme.label(0.84))
                     .lineLimit(1)
                 Text(entry.button.rawValue)
                     .font(.system(size: 6.5, design: .monospaced))
-                    .foregroundStyle(theme.text(0.24))
+                    .foregroundStyle(theme.label(0.24))
             }
             .frame(width: 68, alignment: .leading)
 
@@ -736,7 +736,7 @@ struct MappingSettingsView: View {
             } else {
                 Text(action.label)
                     .font(.system(size: 9))
-                    .foregroundStyle(theme.text(0.56))
+                    .foregroundStyle(theme.label(0.56))
                     .lineLimit(1)
             }
         }
@@ -761,10 +761,10 @@ struct MappingSettingsView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("已选：\(selected.label)")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(theme.text(0.78))
+                    .foregroundStyle(theme.label(0.78))
                 Text(mode == .physical ? "点击左侧按键，或直接按下遥控器实体键" : "下拉框直接修改；也可以点击左侧按键定位")
                     .font(.system(size: 8))
-                    .foregroundStyle(theme.text(0.32))
+                    .foregroundStyle(theme.label(0.32))
             }
 
             Spacer()
@@ -783,7 +783,7 @@ struct MappingSettingsView: View {
 
             Text("选中后立即保存")
                 .font(.system(size: 7.5))
-                .foregroundStyle(theme.text(0.26))
+                .foregroundStyle(theme.label(0.26))
         }
         .padding(.horizontal, 22)
         .frame(height: 48)
@@ -797,11 +797,11 @@ struct MappingSettingsView: View {
                 .frame(width: 4, height: 4)
             Text("语音调用系统听写，使用 Mac 麦克风；遥控器麦克风暂未接入")
                 .font(.system(size: 8))
-                .foregroundStyle(theme.text(0.28))
+                .foregroundStyle(theme.label(0.28))
             Spacer()
-            Text("VibeRemote \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8.1") · 映射立即生效")
+            Text("VibeRemote \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8.2") · 映射立即生效")
                 .font(.system(size: 7.5))
-                .foregroundStyle(theme.text(0.24))
+                .foregroundStyle(theme.label(0.24))
         }
         .padding(.horizontal, 22)
         .padding(.vertical, 9)

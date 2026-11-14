@@ -128,7 +128,7 @@ struct OnboardingView: View {
                     .foregroundStyle(theme.primary)
                 Text("把电视遥控器变成 Vibe Coding 手柄")
                     .font(.system(size: 12))
-                    .foregroundStyle(theme.text(0.55))
+                    .foregroundStyle(theme.label(0.55))
             }
 
             Spacer(minLength: 8)
@@ -136,7 +136,7 @@ struct OnboardingView: View {
             Button(action: onClose) {
                 Image(systemName: "xmark")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(theme.text(0.55))
+                    .foregroundStyle(theme.label(0.55))
                     .frame(width: 26, height: 26)
                     .background(Circle().fill(theme.controlFill))
             }
@@ -162,11 +162,11 @@ struct OnboardingView: View {
 
             HStack(spacing: 8) {
                 Label("Siri Remote A2540", systemImage: "appletvremote.gen3")
-                Text("·").foregroundStyle(theme.text(0.3))
+                Text("·").foregroundStyle(theme.label(0.3))
                 Label("小米 RC003-MS", systemImage: "appletvremote.gen4")
             }
             .font(.system(size: 11))
-            .foregroundStyle(theme.text(0.55))
+            .foregroundStyle(theme.label(0.55))
         }
     }
 
@@ -191,7 +191,7 @@ struct OnboardingView: View {
         OnboardingStep(number: "03", title: "试一下语音", detail: "把光标放进输入框，按语音键") {
             Text("建议先跑一次语音自检，确认系统听写、麦克风和遥控器按键都能工作。")
                 .font(.system(size: 11.5))
-                .foregroundStyle(theme.text(0.55))
+                .foregroundStyle(theme.label(0.55))
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 8) {
@@ -217,7 +217,7 @@ struct OnboardingView: View {
             Button("稍后设置") { model.finishOnboarding() }
                 .buttonStyle(.plain)
                 .font(.system(size: 11.5))
-                .foregroundStyle(theme.text(0.45))
+                .foregroundStyle(theme.label(0.45))
 
             Spacer()
 
@@ -253,7 +253,7 @@ private struct OnboardingStep<Content: View>: View {
                         .foregroundStyle(theme.primary)
                     Text(detail)
                         .font(.system(size: 10.5))
-                        .foregroundStyle(theme.text(0.45))
+                        .foregroundStyle(theme.label(0.45))
                 }
             }
             content
@@ -293,7 +293,7 @@ private struct PermissionStatusRow: View {
                     .foregroundStyle(theme.primary)
                 Text(granted ? detail : "未授权 · \(detail)")
                     .font(.system(size: 10.5))
-                    .foregroundStyle(theme.text(granted ? 0.45 : 0.6))
+                    .foregroundStyle(theme.label(granted ? 0.45 : 0.6))
             }
 
             Spacer(minLength: 6)
@@ -351,7 +351,7 @@ struct VoiceSelfTestView: View {
                     .foregroundStyle(theme.primary)
                 Text("先确认权限，再在输入框里说一句话")
                     .font(.system(size: 11.5))
-                    .foregroundStyle(theme.text(0.52))
+                    .foregroundStyle(theme.label(0.52))
             }
 
             Spacer()
@@ -359,7 +359,7 @@ struct VoiceSelfTestView: View {
             Button(action: onClose) {
                 Image(systemName: "xmark")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(theme.text(0.55))
+                    .foregroundStyle(theme.label(0.55))
                     .frame(width: 26, height: 26)
                     .background(Circle().fill(theme.controlFill))
             }
@@ -371,7 +371,7 @@ struct VoiceSelfTestView: View {
         VStack(alignment: .leading, spacing: 9) {
             Text("运行状态")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(theme.text(0.5))
+                .foregroundStyle(theme.label(0.5))
 
             selfTestRow("输入监控", model.inputMonitoringGranted ? "已授权" : "未授权", good: model.inputMonitoringGranted)
             selfTestRow("辅助功能", model.accessibilityGranted ? "已授权" : "未授权", good: model.accessibilityGranted)
@@ -396,7 +396,7 @@ struct VoiceSelfTestView: View {
             HStack {
                 Text("测试输入框")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(theme.text(0.5))
+                    .foregroundStyle(theme.label(0.5))
                 Spacer()
                 Text(model.selfTestDictating ? "正在听写" : "等待语音")
                     .font(.system(size: 10, weight: .medium))
@@ -422,7 +422,7 @@ struct VoiceSelfTestView: View {
                 if testText.isEmpty {
                     Text("点这里，然后按一下遥控器语音键，或点下方按钮；开始后说一句话，再按一次结束。")
                         .font(.system(size: 11.5))
-                        .foregroundStyle(theme.text(0.3))
+                        .foregroundStyle(theme.label(0.3))
                         .padding(.horizontal, 13)
                         .padding(.vertical, 13)
                         .allowsHitTesting(false)
@@ -448,7 +448,7 @@ struct VoiceSelfTestView: View {
 
                 Text("Fn 🌐")
                     .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(theme.text(0.32))
+                    .foregroundStyle(theme.label(0.32))
                     .padding(.horizontal, 7)
                     .padding(.vertical, 4)
                     .background(Capsule().fill(theme.controlFill))
@@ -456,7 +456,7 @@ struct VoiceSelfTestView: View {
 
             Text("正常模式会优先用输入 App 的“开始听写”菜单；这里测试的是系统 Fn 听写，快捷键需与“键盘 → 听写”设置一致。")
                 .font(.system(size: 10))
-                .foregroundStyle(theme.text(0.4))
+                .foregroundStyle(theme.label(0.4))
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(13)
@@ -468,7 +468,7 @@ struct VoiceSelfTestView: View {
             HStack {
                 Text("诊断信息")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(theme.text(0.5))
+                    .foregroundStyle(theme.label(0.5))
                 Spacer()
                 Button(copied ? "已复制" : "复制") {
                     let pasteboard = NSPasteboard.general
@@ -482,7 +482,7 @@ struct VoiceSelfTestView: View {
 
             Text(model.voiceDiagnosticReport())
                 .font(.system(size: 9.5, design: .monospaced))
-                .foregroundStyle(theme.text(0.48))
+                .foregroundStyle(theme.label(0.48))
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -514,11 +514,11 @@ struct VoiceSelfTestView: View {
                 .frame(width: 15)
             Text(title)
                 .font(.system(size: 11.5))
-                .foregroundStyle(theme.text(0.55))
+                .foregroundStyle(theme.label(0.55))
                 .frame(width: 64, alignment: .leading)
             Text(value)
                 .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(theme.text(0.8))
+                .foregroundStyle(theme.label(0.8))
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: 0)
@@ -549,7 +549,7 @@ private struct OnboardingSmallButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 10.5, weight: .medium))
-            .foregroundStyle(theme.text(0.75))
+            .foregroundStyle(theme.label(0.75))
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(

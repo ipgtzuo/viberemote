@@ -137,7 +137,7 @@ private struct MappingRow: View {
             Keycap(text: key)
             Text(action)
                 .font(.system(size: 9))
-                .foregroundStyle(theme.text(0.55))
+                .foregroundStyle(theme.label(0.55))
             Spacer(minLength: 0)
         }
     }
@@ -158,10 +158,10 @@ private struct PermissionChip: View {
                     .frame(width: 4, height: 4)
                 Text(title)
                     .font(.system(size: 8.5, weight: .medium))
-                    .foregroundStyle(theme.text(granted ? 0.6 : 0.8))
+                    .foregroundStyle(theme.label(granted ? 0.6 : 0.8))
                 Text(granted ? "已授权" : "去授权")
                     .font(.system(size: 7))
-                    .foregroundStyle(theme.text(0.32))
+                    .foregroundStyle(theme.label(0.32))
             }
             .frame(maxWidth: .infinity, minHeight: 24)
             .background(
@@ -293,10 +293,10 @@ struct VibeRemoteView: View {
                         .frame(width: 4, height: 4)
                     Text(model.selectedRemoteConnected ? remoteDisplayName : (model.connected ? "等待 \(displayKind.shortLabel)" : "等待遥控器"))
                         .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(theme.text(0.48))
+                        .foregroundStyle(theme.label(0.48))
                     Text("· \(model.modeDisplay)")
                         .font(.system(size: 8))
-                        .foregroundStyle(theme.text(0.3))
+                        .foregroundStyle(theme.label(0.3))
                 }
             }
 
@@ -304,7 +304,7 @@ struct VibeRemoteView: View {
 
             Text(model.selectedRemoteConnected ? "已连接" : "未连接")
                 .font(.system(size: 8, weight: .medium))
-                .foregroundStyle(theme.text(model.selectedRemoteConnected ? 0.55 : 0.34))
+                .foregroundStyle(theme.label(model.selectedRemoteConnected ? 0.55 : 0.34))
                 .padding(.horizontal, 8)
                 .frame(height: 22)
                 .background(
@@ -316,7 +316,7 @@ struct VibeRemoteView: View {
             if previewMode {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(theme.text(0.45))
+                    .foregroundStyle(theme.label(0.45))
                     .frame(width: 24, height: 24)
                     .background(Circle().fill(theme.text(0.055)))
             } else {
@@ -349,7 +349,7 @@ struct VibeRemoteView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(theme.text(0.45))
+                        .foregroundStyle(theme.label(0.45))
                         .frame(width: 24, height: 24)
                         .background(
                             Circle()
@@ -395,7 +395,7 @@ struct VibeRemoteView: View {
                         .foregroundStyle(listening ? Color(red: 1.0, green: 0.74, blue: 0.45) : theme.text(0.92))
                     Text(listening ? "再按一次结束" : (bindings.action(for: .siri) == .dictation ? "按下开始，再按结束" : "\(sendHint) · \(model.resolvedMode.label)"))
                         .font(.system(size: 8))
-                        .foregroundStyle(theme.text(0.36))
+                        .foregroundStyle(theme.label(0.36))
                         .lineLimit(1)
                 }
 
@@ -405,7 +405,7 @@ struct VibeRemoteView: View {
                     Keycap(text: voiceKeyLabel, accent: theme.primary)
                     Text("切换")
                         .font(.system(size: 7))
-                        .foregroundStyle(theme.text(0.28))
+                        .foregroundStyle(theme.label(0.28))
                 }
             }
         }
@@ -423,20 +423,20 @@ struct VibeRemoteView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("遥控器")
                                 .font(.system(size: 7.2))
-                                .foregroundStyle(theme.text(0.34))
+                                .foregroundStyle(theme.label(0.34))
                             Text(model.selectedRemoteConnected ? "已连接" : "等待连接")
                                 .font(.system(size: 9.5, weight: .medium))
-                                .foregroundStyle(theme.text(0.84))
+                                .foregroundStyle(theme.label(0.84))
                             Text(remoteStatusDetail)
                                 .font(.system(size: 7.2))
-                                .foregroundStyle(theme.text(0.33))
+                                .foregroundStyle(theme.label(0.33))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.up.chevron.down")
                             .font(.system(size: 7, weight: .semibold))
-                            .foregroundStyle(theme.text(0.28))
+                            .foregroundStyle(theme.label(0.28))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.trailing, 8)
@@ -467,24 +467,24 @@ struct VibeRemoteView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("输入目标")
                             .font(.system(size: 7.2))
-                            .foregroundStyle(theme.text(0.34))
+                            .foregroundStyle(theme.label(0.34))
 
                         HStack(spacing: 5) {
                             modeLogo(model.resolvedMode)
                             Text(model.resolvedMode.label)
                                 .font(.system(size: 9.5, weight: .medium))
-                                .foregroundStyle(theme.text(0.84))
+                                .foregroundStyle(theme.label(0.84))
                                 .lineLimit(1)
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.up.chevron.down")
                                 .font(.system(size: 7, weight: .semibold))
-                                .foregroundStyle(theme.text(0.28))
+                                .foregroundStyle(theme.label(0.28))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                         Text(model.selectedMode.isAutomatic ? "跟随前台应用" : "固定模式")
                             .font(.system(size: 7.2))
-                            .foregroundStyle(theme.text(0.33))
+                            .foregroundStyle(theme.label(0.33))
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -515,20 +515,20 @@ struct VibeRemoteView: View {
                 HStack(spacing: 6) {
                     Text("按键映射")
                         .font(.system(size: 8.5, weight: .medium))
-                        .foregroundStyle(theme.text(0.4))
+                        .foregroundStyle(theme.label(0.4))
                     Text(presetDisplay)
                         .font(.system(size: 7))
-                        .foregroundStyle(theme.text(0.3))
+                        .foregroundStyle(theme.label(0.3))
                     Spacer(minLength: 0)
                     if !model.lastAction.isEmpty {
                         Text(model.lastAction)
                             .font(.system(size: 7))
-                            .foregroundStyle(theme.text(0.28))
+                            .foregroundStyle(theme.label(0.28))
                     }
                     Button("编辑") { model.openMappingSettings() }
                         .buttonStyle(.plain)
                         .font(.system(size: 8, weight: .medium))
-                        .foregroundStyle(theme.text(0.55))
+                        .foregroundStyle(theme.label(0.55))
                 }
 
                 HStack(spacing: 5) {
@@ -538,7 +538,7 @@ struct VibeRemoteView: View {
                     if bindings.activePreset == nil {
                         Text("自定义")
                             .font(.system(size: 7))
-                            .foregroundStyle(theme.text(0.3))
+                            .foregroundStyle(theme.label(0.3))
                     }
                     Spacer(minLength: 0)
                 }
@@ -600,7 +600,7 @@ struct VibeRemoteView: View {
             Keycap(text: buttonTitle(button))
             Text(actionDisplay(action))
                 .font(.system(size: 7.5, weight: .medium))
-                .foregroundStyle(action == .none ? theme.text(0.25) : theme.text(0.58))
+                .foregroundStyle(action == .none ? theme.label(0.25) : theme.label(0.72))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Spacer(minLength: 0)
@@ -765,12 +765,12 @@ struct VibeRemoteView: View {
                 .frame(width: 4, height: 4)
             Text(model.status)
                 .font(.system(size: 7.5))
-                .foregroundStyle(theme.text(0.32))
+                .foregroundStyle(theme.label(0.32))
                 .lineLimit(1)
             Spacer(minLength: 4)
-            Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8.1")")
+            Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.8.2")")
                 .font(.system(size: 7))
-                .foregroundStyle(theme.text(0.22))
+                .foregroundStyle(theme.label(0.22))
         }
         .padding(.horizontal, 14)
         .padding(.top, 7)

@@ -390,8 +390,17 @@ final class ActionExecutor {
     }
 
     func sendShowAllWindows() {
-        postKey(CGKeyCode(kVK_UpArrow), down: true, flags: .maskControl)
-        postKey(CGKeyCode(kVK_UpArrow), down: false, flags: .maskControl)
+        // Synthetic Ctrl+Up is ignored by some macOS builds (or when the
+        // Mission Control shortcut has been changed). Launching the system
+        // Mission Control app is the stable path.
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.exposelauncher") {
+            let configuration = NSWorkspace.OpenConfiguration()
+            configuration.activates = true
+            NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, _ in }
+        } else {
+            postKey(CGKeyCode(kVK_UpArrow), down: true, flags: .maskControl)
+            postKey(CGKeyCode(kVK_UpArrow), down: false, flags: .maskControl)
+        }
     }
 
     func sendArrow(_ key: Int) {

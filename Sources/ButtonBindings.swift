@@ -24,6 +24,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
     case deleteBackward
     case pageUp
     case pageDown
+    case browserBack
     case none
 
     var id: String { rawValue }
@@ -52,6 +53,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
         case .deleteBackward: return "删除 / Backspace"
         case .pageUp: return "向上翻页 / Page Up"
         case .pageDown: return "向下翻页 / Page Down"
+        case .browserBack: return "浏览器上一页 / ⌘["
         case .none: return "不操作"
         }
     }
@@ -80,6 +82,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
         case .deleteBackward: return "删除"
         case .pageUp: return "上页"
         case .pageDown: return "下页"
+        case .browserBack: return "上一页"
         case .none: return "无"
         }
     }

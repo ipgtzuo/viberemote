@@ -160,6 +160,12 @@ final class ActionExecutor {
                 onAction?("向下翻页", "arrow.down.to.line")
             }
 
+        case .browserBack:
+            if pressed {
+                sendBrowserBack()
+                onAction?("浏览器上一页", "chevron.backward")
+            }
+
         case .none:
             break
         }
@@ -297,6 +303,11 @@ final class ActionExecutor {
     func sendPageDown() {
         postKey(CGKeyCode(kVK_PageDown), down: true, flags: [])
         postKey(CGKeyCode(kVK_PageDown), down: false, flags: [])
+    }
+
+    func sendBrowserBack() {
+        postKey(CGKeyCode(kVK_ANSI_LeftBracket), down: true, flags: .maskCommand)
+        postKey(CGKeyCode(kVK_ANSI_LeftBracket), down: false, flags: .maskCommand)
     }
 
     func sendArrow(_ key: Int) {

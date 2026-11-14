@@ -570,14 +570,16 @@ struct MappingSettingsView: View {
                             bindings.apply(preset)
                         } label: {
                             Text(preset.title)
-                                .font(.system(size: 9, weight: .medium))
+                                .font(.system(size: 10, weight: .medium))
                                 .foregroundStyle(bindings.activePreset == preset ? theme.selectedText : theme.text(0.52))
-                                .frame(width: 76, height: 24)
+                                .frame(width: 98, height: 30)
                                 .background(
                                     Capsule().fill(bindings.activePreset == preset ? theme.selectedFill : Color.clear)
                                 )
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .contentShape(Rectangle())
                         .help(preset.detail)
                     }
                 }
@@ -747,8 +749,8 @@ struct MappingSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: 210)
-                .controlSize(.small)
+                .frame(width: 220, height: 26)
+                .controlSize(.regular)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -764,16 +766,16 @@ struct MappingSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: 210)
-                .controlSize(.small)
+                .frame(width: 220, height: 26)
+                .controlSize(.regular)
             }
 
-            Text("立即保存")
+            Text("已自动保存")
                 .font(.system(size: 7.5))
                 .foregroundStyle(theme.label(0.26))
         }
         .padding(.horizontal, 22)
-        .frame(height: 64)
+        .frame(height: 68)
         .background(theme.text(0.025))
     }
 

@@ -17,6 +17,7 @@ final class ActionExecutor {
     private var heldDirections: Set<RemoteButton> = []
     private var pointerTimer: Timer?
     private var lastPressAt: [RemoteButton: TimeInterval] = [:]
+    private var buttonsDown: Set<RemoteButton> = []
     private var pointerStart: TimeInterval = 0
     private var pointerLastAction: String?
 
@@ -51,6 +52,8 @@ final class ActionExecutor {
 
     func handle(_ button: RemoteButton, pressed: Bool) {
         if pressed {
+            guard !buttonsDown.contains(button) else { return }
+            buttonsDown.insert(button)
             let doubleAction = bindings.doubleAction(for: button)
             if doubleAction != .none {
                 let now = ProcessInfo.processInfo.systemUptime
@@ -62,6 +65,8 @@ final class ActionExecutor {
                 }
                 lastPressAt[button] = now
             }
+        } else {
+            buttonsDown.remove(button)
         }
         execute(bindings.action(for: button), button: button, pressed: pressed)
     }
@@ -277,6 +282,8 @@ final class ActionExecutor {
     func releaseAll() {
         endDictation()
         heldDirections.removeAll()
+        lastPressAt.removeAll()
+        buttonsDown.removeAll()
         stopPointerTimer()
         if selectDown {
             selectDown = false

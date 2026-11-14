@@ -535,11 +535,6 @@ struct VibeRemoteView: View {
                     ForEach(ButtonPreset.allCases) { preset in
                         presetChip(preset)
                     }
-                    if bindings.activePreset == nil {
-                        Text("自定义")
-                            .font(.system(size: 7))
-                            .foregroundStyle(theme.label(0.3))
-                    }
                     Spacer(minLength: 0)
                 }
 
@@ -561,10 +556,10 @@ struct VibeRemoteView: View {
             bindings.apply(preset)
         } label: {
             Text(preset.title)
-                .font(.system(size: 7.5, weight: .medium))
+                .font(.system(size: 8, weight: .medium))
                 .foregroundStyle(active ? theme.selectedText : theme.text(0.52))
-                .padding(.horizontal, 7)
-                .frame(height: 20)
+                .padding(.horizontal, 9)
+                .frame(height: 24)
                 .background(
                     Capsule()
                         .fill(active ? theme.selectedFill : theme.controlFill)
@@ -572,8 +567,10 @@ struct VibeRemoteView: View {
                             Capsule().strokeBorder(active ? .clear : theme.controlStroke, lineWidth: 1)
                         )
                 )
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .contentShape(Capsule())
     }
 
     @ViewBuilder

@@ -8,7 +8,7 @@
 
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111111?logo=apple)](https://www.apple.com/macos/)
 [![Swift 5](https://img.shields.io/badge/Swift-5-F05138?logo=swift)](https://swift.org)
-[![Version](https://img.shields.io/badge/version-1.9.5-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.9.6-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ![VibeRemote 菜单栏面板](docs/panel.jpg)
@@ -34,7 +34,7 @@
 | 遥控器选择 | 面板内直接切换自动 / Siri / 小米，预览各自布局 |
 | 连接状态 | 显示已连接数量、设备名、蓝牙传输和电量 |
 | 输入目标 | 固定模式，或跟随前台 App 自动切换 DeepSeek / WorkBuddy / 豆包 |
-| 映射方案 | 鼠标模式 / DeepSeek 键盘预设，当前方案高亮 |
+| 映射方案 | 鼠标模式 / Agent 输入预设，当前方案高亮 |
 | 按键映射 | 面板内直接点按每个按键修改动作，支持键盘、鼠标、滚动、拖拽、语音 |
 | 品牌图标 | DeepSeek、WorkBuddy、豆包使用各自真实应用图标 |
 | 自动切换 | 跟随前台 App 切换对应模式，每个模式独立保存键位 |
@@ -168,7 +168,7 @@ VibeRemote 会优先通过辅助功能点击当前 App 的 **编辑 → 开始�
 
 ## 默认键位
 
-### DeepSeek 键盘
+### Agent 输入
 
 | 遥控器 | 动作 |
 |---|---|
@@ -184,10 +184,11 @@ VibeRemote 会优先通过辅助功能点击当前 App 的 **编辑 → 开始�
 | 遥控器 | 动作 |
 |---|---|
 | Siri / 语音 | 开始 / 结束语音听写 |
-| TV | Return：发送 |
-| 返回 / Menu | Escape：停止 |
-| 方向环 | 鼠标光标移动 |
+| TV | 鼠标中键 |
+| 返回 / Menu | 鼠标右键 |
+| 方向环 | 鼠标光标移动；点按微移，长按加速 |
 | Select / 中心 | 鼠标左键；按住再移动方向环 = 拖拽 |
+| Select 双击 | 显示所有窗口（Mission Control） |
 | 播放 / 暂停 | 切换滚动 / 光标模式 |
 
 ## 模式

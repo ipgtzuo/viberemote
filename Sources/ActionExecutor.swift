@@ -16,7 +16,7 @@ final class ActionExecutor {
     private var scrollMode = false
     private var heldDirections: Set<RemoteButton> = []
     private var pointerTimer: Timer?
-    private var lastLeftClickAt: TimeInterval = 0
+    private var lastPressAt: [RemoteButton: TimeInterval] = [:]
     private var pointerStart: TimeInterval = 0
     private var pointerLastAction: String?
 
@@ -50,8 +50,23 @@ final class ActionExecutor {
     }
 
     func handle(_ button: RemoteButton, pressed: Bool) {
-        let action = bindings.action(for: button)
+        if pressed {
+            let doubleAction = bindings.doubleAction(for: button)
+            if doubleAction != .none {
+                let now = ProcessInfo.processInfo.systemUptime
+                if now - lastPressAt[button, default: 0] < 0.35 {
+                    lastPressAt[button] = 0
+                    execute(doubleAction, button: button, pressed: true)
+                    onAction?("双击 · \(doubleAction.shortLabel)", "cursorarrow.click.2")
+                    return
+                }
+                lastPressAt[button] = now
+            }
+        }
+        execute(bindings.action(for: button), button: button, pressed: pressed)
+    }
 
+    private func execute(_ action: ButtonAction, button: RemoteButton, pressed: Bool) {
         switch action {
         case .dictation:
             if pressed {
@@ -82,14 +97,6 @@ final class ActionExecutor {
             if button == .select {
                 if pressed {
                     guard !selectDown else { return }
-                    let now = ProcessInfo.processInfo.systemUptime
-                    if now - lastLeftClickAt < 0.35 {
-                        lastLeftClickAt = 0
-                        sendShowAllWindows()
-                        onAction?("所有窗口", "rectangle.3.group")
-                        return
-                    }
-                    lastLeftClickAt = now
                     selectDown = true
                     postMouse(.leftMouseDown)
                     onAction?("按下 / 拖拽", "cursorarrow.click")

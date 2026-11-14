@@ -660,6 +660,7 @@ struct MappingSettingsView: View {
 
     private func mappingCard(_ entry: MappingEntry) -> some View {
         let action = bindings.action(for: entry.button)
+        let doubleAction = bindings.doubleAction(for: entry.button)
         let isSelected = selected == entry.button
         let color = actionColor(action, isDark: theme.isDark)
 
@@ -681,6 +682,12 @@ struct MappingSettingsView: View {
                 Text(entry.button.rawValue)
                     .font(.system(size: 6.5, design: .monospaced))
                     .foregroundStyle(theme.label(0.24))
+                if doubleAction != .none {
+                    Text("双击 \(doubleAction.shortLabel)")
+                        .font(.system(size: 6.5, weight: .medium))
+                        .foregroundStyle(color.opacity(0.82))
+                        .lineLimit(1)
+                }
             }
             .frame(width: 68, alignment: .leading)
 
@@ -727,24 +734,46 @@ struct MappingSettingsView: View {
 
             Spacer()
 
-            Picker("", selection: Binding(
-                get: { bindings.action(for: selected) },
-                set: { bindings.set($0, for: selected) }
-            )) {
-                ForEach(ButtonAction.allCases) { action in
-                    Text(action.label).tag(action)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("单击")
+                    .font(.system(size: 7, weight: .medium))
+                    .foregroundStyle(theme.label(0.30))
+                Picker("", selection: Binding(
+                    get: { bindings.action(for: selected) },
+                    set: { bindings.set($0, for: selected) }
+                )) {
+                    ForEach(ButtonAction.allCases) { action in
+                        Text(action.label).tag(action)
+                    }
                 }
+                .labelsHidden()
+                .frame(width: 210)
+                .controlSize(.small)
             }
-            .labelsHidden()
-            .frame(width: 250)
-            .controlSize(.small)
 
-            Text("选中后立即保存")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("双击")
+                    .font(.system(size: 7, weight: .medium))
+                    .foregroundStyle(theme.label(0.30))
+                Picker("", selection: Binding(
+                    get: { bindings.doubleAction(for: selected) },
+                    set: { bindings.setDouble($0, for: selected) }
+                )) {
+                    ForEach(ButtonAction.allCases) { action in
+                        Text(action.label).tag(action)
+                    }
+                }
+                .labelsHidden()
+                .frame(width: 210)
+                .controlSize(.small)
+            }
+
+            Text("立即保存")
                 .font(.system(size: 7.5))
                 .foregroundStyle(theme.label(0.26))
         }
         .padding(.horizontal, 22)
-        .frame(height: 48)
+        .frame(height: 64)
         .background(theme.text(0.025))
     }
 

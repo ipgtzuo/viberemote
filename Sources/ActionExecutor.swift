@@ -16,6 +16,7 @@ final class ActionExecutor {
     private var scrollMode = false
     private var heldDirections: Set<RemoteButton> = []
     private var pointerTimer: Timer?
+    private var lastLeftClickAt: TimeInterval = 0
     private var pointerStart: TimeInterval = 0
     private var pointerLastAction: String?
 
@@ -81,6 +82,14 @@ final class ActionExecutor {
             if button == .select {
                 if pressed {
                     guard !selectDown else { return }
+                    let now = ProcessInfo.processInfo.systemUptime
+                    if now - lastLeftClickAt < 0.35 {
+                        lastLeftClickAt = 0
+                        sendShowAllWindows()
+                        onAction?("所有窗口", "rectangle.3.group")
+                        return
+                    }
+                    lastLeftClickAt = now
                     selectDown = true
                     postMouse(.leftMouseDown)
                     onAction?("按下 / 拖拽", "cursorarrow.click")
@@ -164,6 +173,12 @@ final class ActionExecutor {
             if pressed {
                 sendBrowserBack()
                 onAction?("浏览器上一页", "chevron.backward")
+            }
+
+        case .showAllWindows:
+            if pressed {
+                sendShowAllWindows()
+                onAction?("所有窗口", "rectangle.3.group")
             }
 
         case .none:
@@ -308,6 +323,11 @@ final class ActionExecutor {
     func sendBrowserBack() {
         postKey(CGKeyCode(kVK_ANSI_LeftBracket), down: true, flags: .maskCommand)
         postKey(CGKeyCode(kVK_ANSI_LeftBracket), down: false, flags: .maskCommand)
+    }
+
+    func sendShowAllWindows() {
+        postKey(CGKeyCode(kVK_UpArrow), down: true, flags: .maskControl)
+        postKey(CGKeyCode(kVK_UpArrow), down: false, flags: .maskControl)
     }
 
     func sendArrow(_ key: Int) {

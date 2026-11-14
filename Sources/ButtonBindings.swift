@@ -25,6 +25,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
     case pageUp
     case pageDown
     case browserBack
+    case showAllWindows
     case none
 
     var id: String { rawValue }
@@ -54,6 +55,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
         case .pageUp: return "向上翻页 / Page Up"
         case .pageDown: return "向下翻页 / Page Down"
         case .browserBack: return "浏览器上一页 / ⌘["
+        case .showAllWindows: return "显示所有窗口 / Mission Control"
         case .none: return "不操作"
         }
     }
@@ -83,6 +85,7 @@ enum ButtonAction: String, CaseIterable, Identifiable {
         case .pageUp: return "上页"
         case .pageDown: return "下页"
         case .browserBack: return "上一页"
+        case .showAllWindows: return "所有窗口"
         case .none: return "无"
         }
     }
@@ -103,7 +106,7 @@ enum ButtonPreset: String, CaseIterable, Identifiable {
 
     var detail: String {
         switch self {
-        case .mouse: return "方向环移动光标 · Select 左键 · 返回右键 · TV 中键 · 播放滚动"
+        case .mouse: return "方向环移动光标 · Select 左键 / 双击所有窗口 · 返回右键 · TV 中键 · 播放滚动"
         case .dshKeyboard: return "方向环方向键 · Select/TV 发送 · 返回停止"
         }
     }

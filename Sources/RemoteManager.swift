@@ -94,6 +94,21 @@ final class RemoteManager {
     private(set) var connectedNames: [RemoteKind: String] = [:]
     var isListening: Bool { isRunning }
 
+    private func trace(_ message: String) {
+        guard FileManager.default.fileExists(atPath: "/tmp/viberemote-debug") else { return }
+        let line = "\(Date().timeIntervalSince1970) \(message)\n"
+        guard let data = line.data(using: .utf8) else { return }
+        let url = URL(fileURLWithPath: "/tmp/viberemote-hid.log")
+        if !FileManager.default.fileExists(atPath: url.path) {
+            try? data.write(to: url)
+            return
+        }
+        guard let handle = try? FileHandle(forWritingTo: url) else { return }
+        _ = try? handle.seekToEnd()
+        try? handle.write(contentsOf: data)
+        try? handle.close()
+    }
+
     private let appleVendorID = 0x004C
     private let xiaomiVendorID = 0x2717
     private let xiaomiProductID = 0x32B8
@@ -108,6 +123,7 @@ final class RemoteManager {
 
         let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
         self.manager = manager
+        trace("start")
 
         // Use explicit product matches instead of a vendor-only dictionary.
         // A broad vendor match can make IOHIDManagerOpen fail with
@@ -132,6 +148,7 @@ final class RemoteManager {
         IOHIDManagerRegisterInputValueCallback(manager, inputValueCallback, Unmanaged.passUnretained(self).toOpaque())
 
         let result = IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
+        trace("manager open result=\(result)")
         guard result == kIOReturnSuccess else {
             onStatus?("无法打开 HID：\(ioErrorName(result))。请在系统设置中授予输入监控权限。")
             isRunning = false
@@ -176,6 +193,7 @@ final class RemoteManager {
     private func enumerateDevices() {
         guard let manager,
               let set = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice> else { return }
+        trace("enumerate count=\(set.count)")
         for device in set {
             if profile(for: device) != nil {
                 open(device)
@@ -219,10 +237,13 @@ final class RemoteManager {
         guard let remoteProfile = profile(for: device) else { return }
         guard !devices.contains(where: { CFEqual($0, device) }) else { return }
 
+        let name = stringProperty(device, kIOHIDProductKey) ?? "?"
         var result = IOHIDDeviceOpen(device, IOOptionBits(kIOHIDOptionsTypeSeizeDevice))
+        let seized = result == kIOReturnSuccess
         if result != kIOReturnSuccess {
             result = IOHIDDeviceOpen(device, IOOptionBits(kIOHIDOptionsTypeNone))
         }
+        trace("open profile=\(remoteProfile) name=\(name) result=\(result) seized=\(seized)")
 
         guard result == kIOReturnSuccess else {
             onStatus?("找到遥控器但无法打开：\(ioErrorName(result))")
@@ -231,8 +252,10 @@ final class RemoteManager {
 
         if remoteProfile == .xiaomiRC003 {
             // RC003 sends a report-ID 1 array of little-endian HID usages.
-            // The manager-level report callback filters on xiaomiActive.
+            // Register both paths: some firmware exposes values directly,
+            // others only emit the vendor report.
             xiaomiDeviceCount += 1
+            IOHIDDeviceRegisterInputValueCallback(device, xiaomiValueCallback, Unmanaged.passUnretained(self).toOpaque())
         } else {
             IOHIDDeviceRegisterInputValueCallback(device, inputValueCallback, Unmanaged.passUnretained(self).toOpaque())
         }
@@ -287,18 +310,36 @@ final class RemoteManager {
         let integer = IOHIDValueGetIntegerValue(value)
         let pressed = integer != 0
 
+        trace("input page=0x\(String(page, radix: 16)) usage=0x\(String(usage, radix: 16)) value=\(integer)")
         onRawEvent?(page, usage, integer)
 
         guard let button = identify(page: page, usage: usage) else { return }
+        emit(button, pressed)
+    }
+
+    fileprivate func handleXiaomiInput(_ value: IOHIDValue) {
+        let element = IOHIDValueGetElement(value)
+        let page = IOHIDElementGetUsagePage(element)
+        let usage = IOHIDElementGetUsage(element)
+        let integer = IOHIDValueGetIntegerValue(value)
+        guard page == 0x07, usage > 0, usage <= 0xFFFF else { return }
+        trace("xiaomi input usage=0x\(String(usage, radix: 16)) value=\(integer)")
+        onRawEvent?(page, usage, integer)
+        guard let button = xiaomiButton(for: UInt16(usage)) else { return }
+        emit(button, integer != 0)
+    }
+
+    private func emit(_ button: RemoteButton, _ pressed: Bool) {
         let key = button.rawValue
         if states[key] == pressed { return }
         states[key] = pressed
-
         onButton?(button, pressed)
     }
 
     fileprivate func handleInputReport(reportID: UInt32, data: Data) {
-        guard xiaomiActive, reportID == 1 else { return }
+        guard xiaomiActive else { return }
+        trace("report id=\(reportID) len=\(data.count)")
+        guard reportID == 1 else { return }
         var bytes = Array(data)
         if bytes.count == 7, bytes.first == UInt8(reportID) {
             bytes.removeFirst()
@@ -316,14 +357,14 @@ final class RemoteManager {
         let released = xiaomiPressed.subtracting(buttons)
         xiaomiPressed = buttons
 
-        for usage in usages.sorted() {
+        for usage in usages.sorted() where usage != 0xFFFF {
             onRawEvent?(0x07, UInt32(usage), 1)
         }
         for button in pressed.sorted(by: { $0.rawValue < $1.rawValue }) {
-            onButton?(button, true)
+            emit(button, true)
         }
         for button in released.sorted(by: { $0.rawValue < $1.rawValue }) {
-            onButton?(button, false)
+            emit(button, false)
         }
     }
 
@@ -451,4 +492,16 @@ private func inputValueCallback(
     guard let context else { return }
     let manager = Unmanaged<RemoteManager>.fromOpaque(context).takeUnretainedValue()
     manager.handleInput(value)
+}
+
+
+private func xiaomiValueCallback(
+    context: UnsafeMutableRawPointer?,
+    result: IOReturn,
+    sender: UnsafeMutableRawPointer?,
+    value: IOHIDValue
+) {
+    guard let context else { return }
+    let manager = Unmanaged<RemoteManager>.fromOpaque(context).takeUnretainedValue()
+    manager.handleXiaomiInput(value)
 }

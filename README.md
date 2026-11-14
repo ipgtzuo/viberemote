@@ -8,7 +8,7 @@
 
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111111?logo=apple)](https://www.apple.com/macos/)
 [![Swift 5](https://img.shields.io/badge/Swift-5-F05138?logo=swift)](https://swift.org)
-[![Version](https://img.shields.io/badge/version-1.8.3-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.8.4-ffb347)](https://github.com/ipgtzuo/viberemote/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ![VibeRemote 菜单栏面板](docs/panel.jpg)

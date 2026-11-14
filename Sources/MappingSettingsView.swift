@@ -459,7 +459,7 @@ struct MappingSettingsView: View {
             inspector
             footer
         }
-        .frame(width: 900, height: 720)
+        .frame(width: 900, height: 760)
         .background(MappingPanelBackground())
         .environment(\.colorScheme, resolvedScheme)
         .preferredColorScheme(model.preferredColorScheme)
@@ -575,7 +575,7 @@ struct MappingSettingsView: View {
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .contentShape(Rectangle())
                                 .background(
-                                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                    RoundedRectangle(cornerRadius: 13, style: .continuous)
                                         .fill(bindings.activePreset == preset ? theme.selectedFill : Color.clear)
                                 )
                         }
@@ -584,7 +584,7 @@ struct MappingSettingsView: View {
                         .help(preset.detail)
                     }
                 }
-                .frame(width: 220, height: 34)
+                .frame(width: 196, height: 30)
                 .background(
                     Capsule()
                         .fill(theme.text(0.055))
@@ -772,12 +772,17 @@ struct MappingSettingsView: View {
                 .controlSize(.regular)
             }
 
-            Text("已自动保存")
-                .font(.system(size: 7.5))
-                .foregroundStyle(theme.label(0.26))
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(" ")
+                    .font(.system(size: 7, weight: .medium))
+                Text("已自动保存")
+                    .font(.system(size: 7.5))
+                    .foregroundStyle(theme.label(0.26))
+                    .frame(height: 26)
+            }
         }
         .padding(.horizontal, 22)
-        .frame(height: 68)
+        .frame(height: 72)
         .background(theme.text(0.025))
     }
 
@@ -808,7 +813,7 @@ final class MappingWindowController: NSObject, NSWindowDelegate {
         if window == nil {
             let hosting = NSHostingView(rootView: MappingSettingsView(model: model, bindings: model.bindings))
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 900, height: 720),
+                contentRect: NSRect(x: 0, y: 0, width: 900, height: 760),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false

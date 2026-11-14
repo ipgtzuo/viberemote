@@ -564,7 +564,7 @@ struct MappingSettingsView: View {
                     .font(.system(size: 8, weight: .medium))
                     .foregroundStyle(theme.label(0.35))
 
-                HStack(spacing: 2) {
+                HStack(spacing: 0) {
                     ForEach(ButtonPreset.allCases) { preset in
                         Button {
                             bindings.apply(preset)
@@ -572,26 +572,28 @@ struct MappingSettingsView: View {
                             Text(preset.title)
                                 .font(.system(size: 10, weight: .medium))
                                 .foregroundStyle(bindings.activePreset == preset ? theme.selectedText : theme.text(0.52))
-                                .frame(width: 98, height: 30)
-                                .background(
-                                    Capsule().fill(bindings.activePreset == preset ? theme.selectedFill : Color.clear)
-                                )
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .contentShape(Rectangle())
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                        .fill(bindings.activePreset == preset ? theme.selectedFill : Color.clear)
+                                )
                         }
                         .buttonStyle(.plain)
                         .contentShape(Rectangle())
                         .help(preset.detail)
                     }
                 }
-                .padding(2)
+                .frame(width: 220, height: 34)
                 .background(
                     Capsule()
                         .fill(theme.text(0.055))
                         .overlay(Capsule().strokeBorder(theme.text(0.07), lineWidth: 1))
                 )
+                .clipShape(Capsule())
 
                 HStack(spacing: 8) {
-                    Text(bindings.activePreset?.detail ?? "自定义：已单独调整按键")
+                    Text(bindings.activePreset.detail)
                         .font(.system(size: 7.5))
                         .foregroundStyle(theme.label(0.38))
                         .lineLimit(1)

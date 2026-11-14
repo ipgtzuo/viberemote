@@ -222,7 +222,7 @@ struct VibeRemoteView: View {
     }
 
     private var presetDisplay: String {
-        bindings.activePreset?.title ?? "自定义"
+        bindings.activePreset.title
     }
 
     private var sendHint: String {

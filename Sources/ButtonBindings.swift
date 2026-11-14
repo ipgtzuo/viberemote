@@ -116,23 +116,22 @@ enum ButtonPreset: String, CaseIterable, Identifiable {
 final class ButtonBindingStore: ObservableObject {
     @Published private(set) var bindings: [RemoteButton: ButtonAction]
     @Published private(set) var doubleBindings: [RemoteButton: ButtonAction]
-    @Published private(set) var activePreset: ButtonPreset?
+    @Published private(set) var activePreset: ButtonPreset = .mouse
 
     private(set) var profile: AppMode = .dsh
+    private var presetBindings: [ButtonPreset: [RemoteButton: ButtonAction]] = [:]
+    private var presetDoubles: [ButtonPreset: [RemoteButton: ButtonAction]] = [:]
     private static let legacyKey = "vibeRemote.buttonBindings"
 
     init(profile: AppMode = .dsh) {
         self.profile = profile
         bindings = ButtonBindingStore.defaultBindings(for: .mouse)
         doubleBindings = ButtonBindingStore.defaultDoubleBindings(for: .mouse)
-        activePreset = .mouse
-        load(profile: profile)
-        if let raw = UserDefaults.standard.string(forKey: activePresetKey(for: profile)),
-           let saved = ButtonPreset(rawValue: raw) {
-            activePreset = saved
-        } else {
-            refreshActivePreset()
+        for preset in ButtonPreset.allCases {
+            presetBindings[preset] = ButtonBindingStore.defaultBindings(for: preset)
+            presetDoubles[preset] = ButtonBindingStore.defaultDoubleBindings(for: preset)
         }
+        load(profile: profile)
     }
 
     func action(for button: RemoteButton) -> ButtonAction {
@@ -145,20 +144,24 @@ final class ButtonBindingStore: ObservableObject {
 
     func set(_ action: ButtonAction, for button: RemoteButton) {
         bindings[button] = action
-        refreshActivePreset()
+        presetBindings[activePreset] = bindings
         save()
     }
 
     func setDouble(_ action: ButtonAction, for button: RemoteButton) {
         doubleBindings[button] = action
-        refreshActivePreset()
+        presetDoubles[activePreset] = doubleBindings
         save()
     }
 
     func apply(_ preset: ButtonPreset) {
-        bindings = ButtonBindingStore.defaultBindings(for: preset)
-        doubleBindings = ButtonBindingStore.defaultDoubleBindings(for: preset)
+        presetBindings[activePreset] = bindings
+        presetDoubles[activePreset] = doubleBindings
         activePreset = preset
+        bindings = presetBindings[preset] ?? ButtonBindingStore.defaultBindings(for: preset)
+        doubleBindings = presetDoubles[preset] ?? ButtonBindingStore.defaultDoubleBindings(for: preset)
+        presetBindings[preset] = bindings
+        presetDoubles[preset] = doubleBindings
         save()
     }
 
@@ -166,94 +169,104 @@ final class ButtonBindingStore: ObservableObject {
         guard profile != self.profile else { return }
         save()
         self.profile = profile
-        bindings = ButtonBindingStore.defaultBindings(for: .mouse)
-        doubleBindings = ButtonBindingStore.defaultDoubleBindings(for: .mouse)
-        activePreset = .mouse
         load(profile: profile)
-        if let raw = UserDefaults.standard.string(forKey: activePresetKey(for: profile)),
-           let saved = ButtonPreset(rawValue: raw) {
-            activePreset = saved
-        } else {
-            refreshActivePreset()
-        }
     }
 
     func reset() {
-        apply(.mouse)
+        bindings = ButtonBindingStore.defaultBindings(for: activePreset)
+        doubleBindings = ButtonBindingStore.defaultDoubleBindings(for: activePreset)
+        presetBindings[activePreset] = bindings
+        presetDoubles[activePreset] = doubleBindings
+        save()
     }
 
     private func load(profile: AppMode) {
-        if let raw = UserDefaults.standard.dictionary(forKey: storageKey(for: profile)) as? [String: String] {
-            load(raw)
-            loadDouble(profile: profile)
-            return
-        }
+        let storedPresets = UserDefaults.standard.dictionary(forKey: presetBindingsKey(for: profile)) as? [String: [String: String]]
+        let storedDoubles = UserDefaults.standard.dictionary(forKey: presetDoublesKey(for: profile)) as? [String: [String: String]]
+        let savedPreset = UserDefaults.standard.string(forKey: activePresetKey(for: profile)).flatMap(ButtonPreset.init(rawValue:))
 
-        // Migrate the single-profile mapping from 1.4 and earlier into DSH.
-        if profile == .dsh,
-           let raw = UserDefaults.standard.dictionary(forKey: Self.legacyKey) as? [String: String] {
-            load(raw)
-            loadDouble(profile: profile)
-            save()
-        }
-    }
-
-    private func loadDouble(profile: AppMode) {
-        if let raw = UserDefaults.standard.dictionary(forKey: doubleStorageKey(for: profile)) as? [String: String] {
-            doubleBindings = [:]
-            for (key, value) in raw {
-                guard let button = RemoteButton(rawValue: key),
-                      let action = ButtonAction(rawValue: value) else { continue }
-                doubleBindings[button] = action
+        if let storedPresets {
+            for preset in ButtonPreset.allCases {
+                if let raw = storedPresets[preset.rawValue] {
+                    presetBindings[preset] = decode(raw)
+                }
             }
-            return
+            if let storedDoubles {
+                for preset in ButtonPreset.allCases {
+                    if let raw = storedDoubles[preset.rawValue] {
+                        presetDoubles[preset] = decode(raw)
+                    }
+                }
+            }
+        } else if let raw = UserDefaults.standard.dictionary(forKey: storageKey(for: profile)) as? [String: String] {
+            let legacy = decode(raw)
+            let inferred: ButtonPreset
+            if let savedPreset {
+                inferred = savedPreset
+            } else if legacy == ButtonBindingStore.defaultBindings(for: .dshKeyboard) {
+                inferred = .dshKeyboard
+            } else {
+                inferred = .mouse
+            }
+            presetBindings[inferred] = legacy
+            if let doubleRaw = UserDefaults.standard.dictionary(forKey: doubleStorageKey(for: profile)) as? [String: String] {
+                presetDoubles[inferred] = decode(doubleRaw)
+            }
+        } else if profile == .dsh,
+                  let raw = UserDefaults.standard.dictionary(forKey: Self.legacyKey) as? [String: String] {
+            presetBindings[.mouse] = decode(raw)
         }
-        if bindings == ButtonBindingStore.defaultBindings(for: .dshKeyboard) {
-            doubleBindings = ButtonBindingStore.defaultDoubleBindings(for: .dshKeyboard)
-        } else if bindings == ButtonBindingStore.defaultBindings(for: .mouse) {
-            doubleBindings = ButtonBindingStore.defaultDoubleBindings(for: .mouse)
-        } else {
-            doubleBindings = [:]
-        }
-    }
 
-    private func load(_ raw: [String: String]) {
-        for (key, value) in raw {
-            guard let button = RemoteButton(rawValue: key),
-                  let action = ButtonAction(rawValue: value) else { continue }
-            bindings[button] = action
-        }
+        activePreset = savedPreset ?? .mouse
+        bindings = presetBindings[activePreset] ?? ButtonBindingStore.defaultBindings(for: activePreset)
+        doubleBindings = presetDoubles[activePreset] ?? ButtonBindingStore.defaultDoubleBindings(for: activePreset)
+        presetBindings[activePreset] = bindings
+        presetDoubles[activePreset] = doubleBindings
+        save()
     }
 
     private func save() {
-        var raw: [String: String] = [:]
-        for (button, action) in bindings {
-            raw[button.rawValue] = action.rawValue
-        }
-        UserDefaults.standard.set(raw, forKey: storageKey(for: profile))
+        presetBindings[activePreset] = bindings
+        presetDoubles[activePreset] = doubleBindings
 
-        var doubleRaw: [String: String] = [:]
-        for (button, action) in doubleBindings {
-            doubleRaw[button.rawValue] = action.rawValue
+        UserDefaults.standard.set(encode(bindings), forKey: storageKey(for: profile))
+        UserDefaults.standard.set(encode(doubleBindings), forKey: doubleStorageKey(for: profile))
+        UserDefaults.standard.set(activePreset.rawValue, forKey: activePresetKey(for: profile))
+
+        var allBindings: [String: [String: String]] = [:]
+        var allDoubles: [String: [String: String]] = [:]
+        for preset in ButtonPreset.allCases {
+            allBindings[preset.rawValue] = encode(presetBindings[preset] ?? ButtonBindingStore.defaultBindings(for: preset))
+            allDoubles[preset.rawValue] = encode(presetDoubles[preset] ?? ButtonBindingStore.defaultDoubleBindings(for: preset))
         }
-        UserDefaults.standard.set(doubleRaw, forKey: doubleStorageKey(for: profile))
-        UserDefaults.standard.set((activePreset ?? .mouse).rawValue, forKey: activePresetKey(for: profile))
+        UserDefaults.standard.set(allBindings, forKey: presetBindingsKey(for: profile))
+        UserDefaults.standard.set(allDoubles, forKey: presetDoublesKey(for: profile))
     }
 
-    private func refreshActivePreset() {
-        if bindings == ButtonBindingStore.defaultBindings(for: .mouse),
-           doubleBindings == ButtonBindingStore.defaultDoubleBindings(for: .mouse) {
-            activePreset = .mouse
-        } else if bindings == ButtonBindingStore.defaultBindings(for: .dshKeyboard),
-                  doubleBindings == ButtonBindingStore.defaultDoubleBindings(for: .dshKeyboard) {
-            activePreset = .dshKeyboard
-        } else if activePreset == nil {
-            activePreset = .mouse
+    private func encode(_ map: [RemoteButton: ButtonAction]) -> [String: String] {
+        Dictionary(uniqueKeysWithValues: map.map { ($0.key.rawValue, $0.value.rawValue) })
+    }
+
+    private func decode(_ raw: [String: String]) -> [RemoteButton: ButtonAction] {
+        var map: [RemoteButton: ButtonAction] = [:]
+        for (key, value) in raw {
+            guard let button = RemoteButton(rawValue: key),
+                  let action = ButtonAction(rawValue: value) else { continue }
+            map[button] = action
         }
+        return map
     }
 
     private func activePresetKey(for profile: AppMode) -> String {
         "vibeRemote.activePreset.\(profile.rawValue)"
+    }
+
+    private func presetBindingsKey(for profile: AppMode) -> String {
+        "vibeRemote.presetBindings.\(profile.rawValue)"
+    }
+
+    private func presetDoublesKey(for profile: AppMode) -> String {
+        "vibeRemote.presetDoubles.\(profile.rawValue)"
     }
 
     private func storageKey(for profile: AppMode) -> String {

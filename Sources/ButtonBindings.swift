@@ -100,7 +100,7 @@ enum ButtonPreset: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .mouse: return "鼠标模式"
-        case .dshKeyboard: return "Agent 输入"
+        case .dshKeyboard: return "Agent 模式"
         }
     }
 

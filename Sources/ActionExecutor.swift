@@ -141,6 +141,18 @@ final class ActionExecutor {
                 onAction?("删除", "delete.left")
             }
 
+        case .pageUp:
+            if pressed {
+                sendPageUp()
+                onAction?("向上翻页", "arrow.up.to.line")
+            }
+
+        case .pageDown:
+            if pressed {
+                sendPageDown()
+                onAction?("向下翻页", "arrow.down.to.line")
+            }
+
         case .none:
             break
         }
@@ -268,6 +280,16 @@ final class ActionExecutor {
     func sendDelete() {
         postKey(CGKeyCode(kVK_Delete), down: true, flags: [])
         postKey(CGKeyCode(kVK_Delete), down: false, flags: [])
+    }
+
+    func sendPageUp() {
+        postKey(CGKeyCode(kVK_PageUp), down: true, flags: [])
+        postKey(CGKeyCode(kVK_PageUp), down: false, flags: [])
+    }
+
+    func sendPageDown() {
+        postKey(CGKeyCode(kVK_PageDown), down: true, flags: [])
+        postKey(CGKeyCode(kVK_PageDown), down: false, flags: [])
     }
 
     func sendArrow(_ key: Int) {

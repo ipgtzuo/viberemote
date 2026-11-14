@@ -70,6 +70,8 @@ private func actionColor(_ action: ButtonAction, isDark: Bool) -> Color {
         return isDark ? Color(red: 0.35, green: 0.90, blue: 0.64) : Color(red: 0.08, green: 0.55, blue: 0.33)
     case .stop, .deleteBackward:
         return isDark ? Color(red: 1.0, green: 0.40, blue: 0.38) : Color(red: 0.80, green: 0.16, blue: 0.18)
+    case .pageUp, .pageDown:
+        return isDark ? Color(red: 0.48, green: 0.78, blue: 1.0) : Color(red: 0.18, green: 0.42, blue: 0.78)
     case .leftClick, .rightClick:
         return isDark ? Color(red: 0.42, green: 0.60, blue: 1.0) : Color(red: 0.16, green: 0.34, blue: 0.80)
     case .moveUp, .moveDown, .moveLeft, .moveRight:
